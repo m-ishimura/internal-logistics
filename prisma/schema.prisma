@@ -1,0 +1,126 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  entraId       String?  @unique @map("entra_id")
+  email         String   @unique
+  name          String
+  passwordHash  String?  @map("password_hash")
+  departmentId  String   @map("department_id")
+  role          UserRole
+  authType      AuthType @map("auth_type")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  department Department @relation(fields: [departmentId], references: [id])
+  shipments  Shipment[]
+  bulkImports BulkImport[]
+
+  @@map("users")
+}
+
+model Department {
+  id           String   @id @default(cuid())
+  name         String
+  code         String   @unique
+  isManagement Boolean  @map("is_management")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  users     User[]
+  items     Item[]
+  shipments Shipment[]
+
+  @@map("departments")
+}
+
+model Item {
+  id           String   @id @default(cuid())
+  name         String
+  category     String
+  unit         String
+  departmentId String   @map("department_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  department Department @relation(fields: [departmentId], references: [id])
+  shipments  Shipment[]
+
+  @@map("items")
+}
+
+model Shipment {
+  id             String    @id @default(cuid())
+  itemId         String    @map("item_id")
+  quantity       Int
+  senderId       String    @map("sender_id")
+  departmentId   String    @map("department_id")
+  destination    String
+  trackingNumber String?   @map("tracking_number")
+  notes          String?
+  shippedAt      DateTime? @map("shipped_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  item       Item       @relation(fields: [itemId], references: [id])
+  sender     User       @relation(fields: [senderId], references: [id])
+  department Department @relation(fields: [departmentId], references: [id])
+
+  @@map("shipments")
+}
+
+model BulkImport {
+  id            String           @id @default(cuid())
+  fileName      String           @map("file_name")
+  totalRecords  Int              @map("total_records")
+  successRecords Int             @map("success_records")
+  errorRecords  Int              @map("error_records")
+  uploadedBy    String           @map("uploaded_by")
+  status        BulkImportStatus
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+
+  uploader User                @relation(fields: [uploadedBy], references: [id])
+  errors   BulkImportError[]
+
+  @@map("bulk_imports")
+}
+
+model BulkImportError {
+  id           String   @id @default(cuid())
+  bulkImportId String   @map("bulk_import_id")
+  rowNumber    Int      @map("row_number")
+  errorMessage String   @map("error_message")
+  rowData      Json     @map("row_data")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  bulkImport BulkImport @relation(fields: [bulkImportId], references: [id])
+
+  @@map("bulk_import_errors")
+}
+
+enum UserRole {
+  DEPARTMENT_USER  @map("department_user")
+  MANAGEMENT_USER  @map("management_user")
+}
+
+enum AuthType {
+  ENTRA_ID  @map("entra_id")
+  PASSWORD  @map("password")
+}
+
+enum BulkImportStatus {
+  PROCESSING  @map("processing")
+  COMPLETED   @map("completed")
+  FAILED      @map("failed")
+}

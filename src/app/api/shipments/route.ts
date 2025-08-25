@@ -1,0 +1,132 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { shipmentSchema, paginationSchema } from '@/lib/validation'
+
+export async function GET(request: NextRequest) {
+  try {
+    const userId = request.headers.get('x-user-id')
+    const userRole = request.headers.get('x-user-role')
+    const departmentId = request.headers.get('x-department-id')
+
+    const url = new URL(request.url)
+    const queryParams = Object.fromEntries(url.searchParams.entries())
+    const { error, value } = paginationSchema.validate(queryParams)
+    
+    if (error) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid query parameters', details: error.details },
+        { status: 400 }
+      )
+    }
+
+    const { page, limit, search, sortBy = 'createdAt', sortOrder } = value
+    const skip = (page - 1) * limit
+
+    let where: any = {}
+
+    // Department users can only see their own department's shipments
+    if (userRole === 'DEPARTMENT_USER') {
+      where.departmentId = departmentId
+    }
+
+    if (search) {
+      where.OR = [
+        { destination: { contains: search, mode: 'insensitive' as const } },
+        { trackingNumber: { contains: search, mode: 'insensitive' as const } },
+        { item: { name: { contains: search, mode: 'insensitive' as const } } }
+      ]
+    }
+
+    const [shipments, total] = await Promise.all([
+      prisma.shipment.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { [sortBy]: sortOrder },
+        include: {
+          item: true,
+          sender: {
+            select: { id: true, name: true, email: true }
+          },
+          department: true
+        }
+      }),
+      prisma.shipment.count({ where })
+    ])
+
+    return NextResponse.json({
+      success: true,
+      data: shipments,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    })
+  } catch (error) {
+    console.error('Get shipments error:', error)
+    return NextResponse.json(
+      { success: false, error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const userId = request.headers.get('x-user-id')!
+    const userRole = request.headers.get('x-user-role')
+    const departmentId = request.headers.get('x-department-id')!
+
+    const body = await request.json()
+    const { error, value } = shipmentSchema.validate(body)
+    
+    if (error) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid input', details: error.details },
+        { status: 400 }
+      )
+    }
+
+    // Verify the item belongs to the user's department (for department users)
+    if (userRole === 'DEPARTMENT_USER') {
+      const item = await prisma.item.findUnique({
+        where: { id: value.itemId }
+      })
+
+      if (!item || item.departmentId !== departmentId) {
+        return NextResponse.json(
+          { success: false, error: 'Item not found or access denied' },
+          { status: 403 }
+        )
+      }
+    }
+
+    const shipment = await prisma.shipment.create({
+      data: {
+        ...value,
+        senderId: userId,
+        departmentId: departmentId
+      },
+      include: {
+        item: true,
+        sender: {
+          select: { id: true, name: true, email: true }
+        },
+        department: true
+      }
+    })
+
+    return NextResponse.json({
+      success: true,
+      data: shipment
+    }, { status: 201 })
+  } catch (error) {
+    console.error('Create shipment error:', error)
+    return NextResponse.json(
+      { success: false, error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
