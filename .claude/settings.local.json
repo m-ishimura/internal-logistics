@@ -2,9 +2,23 @@
   "permissions": {
     "allow": [
       "Bash(npm install:*)",
-      "Bash(npx prisma:*)"
+      "Bash(npx prisma:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm run:*)",
+      "Bash(psql:*)",
+      "Bash(set DATABASE_URL=postgresql://postgres:izumi19m@localhost:5432/internal_logistics)",
+      "Bash(tasklist:*)",
+      "Bash(taskkill:*)",
+      "Bash(npx kill-port:*)",
+      "Read(/C:\\Users\\MasahiroIshimura\\Desktop/**)",
+      "Read(/C:\\Users\\MasahiroIshimura\\Desktop/**)",
+      "WebSearch"
     ],
     "deny": [],
-    "ask": []
+    "ask": [],
+    "additionalDirectories": [
+      "C:\\",
+      "C:\\c\\Users\\MasahiroIshimura\\my-app"
+    ]
   }
 }

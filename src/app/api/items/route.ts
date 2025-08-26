@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
 
     const url = new URL(request.url)
     const queryParams = Object.fromEntries(url.searchParams.entries())
+    const forShipment = queryParams.forShipment === 'true' // 発送用フラグ
     const { error, value } = paginationSchema.validate(queryParams)
     
     if (error) {
@@ -24,8 +25,12 @@ export async function GET(request: NextRequest) {
 
     let where: any = {}
 
-    // Department users can only see their own department's items
-    if (userRole === 'DEPARTMENT_USER') {
+    // For shipment creation, all users (including management) can only see their own department's items
+    if (forShipment && departmentId) {
+      where.departmentId = departmentId
+    }
+    // For item management, department users can only see their own department's items
+    else if (userRole === 'DEPARTMENT_USER' && departmentId) {
       where.departmentId = departmentId
     }
 

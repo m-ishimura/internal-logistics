@@ -5,9 +5,12 @@ export async function POST() {
     const response = NextResponse.json({ success: true })
     
     // Clear the authentication cookie
+    response.cookies.delete('auth-token')
+    
+    // Also explicitly set expired cookie
     response.cookies.set('auth-token', '', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      httpOnly: false,
+      secure: false,
       sameSite: 'lax',
       maxAge: 0,
       path: '/'

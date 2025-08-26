@@ -13,7 +13,7 @@ import {
   CardContent,
   Alert
 } from '@/components/ui'
-import type { Item } from '@/types'
+import type { Item, Department } from '@/types'
 
 export default function NewShipmentPage() {
   const { user } = useAuth()
@@ -22,22 +22,23 @@ export default function NewShipmentPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [items, setItems] = useState<Item[]>([])
+  const [departments, setDepartments] = useState<Department[]>([])
   const [formData, setFormData] = useState({
     itemId: searchParams?.get('itemId') || '',
     quantity: '',
     destination: '',
-    trackingNumber: '',
     notes: '',
     shippedAt: ''
   })
 
   useEffect(() => {
     fetchItems()
+    fetchDepartments()
   }, [])
 
   const fetchItems = async () => {
     try {
-      const response = await fetch('/api/items?limit=1000', {
+      const response = await fetch('/api/items?limit=1000&forShipment=true', {
         credentials: 'include'
       })
       
@@ -50,6 +51,21 @@ export default function NewShipmentPage() {
     }
   }
 
+  const fetchDepartments = async () => {
+    try {
+      const response = await fetch('/api/departments', {
+        credentials: 'include'
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setDepartments(data.data || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch departments:', err)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -59,7 +75,7 @@ export default function NewShipmentPage() {
       const submitData = {
         ...formData,
         quantity: parseInt(formData.quantity),
-        ...(formData.shippedAt && { shippedAt: new Date(formData.shippedAt).toISOString() })
+        ...(formData.shippedAt && { shippedAt: new Date(formData.shippedAt + 'T00:00:00.000Z').toISOString() })
       }
 
       const response = await fetch('/api/shipments', {
@@ -93,13 +109,15 @@ export default function NewShipmentPage() {
   const selectedItem = items.find(item => item.id === formData.itemId)
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">新しい発送を登録</h1>
-        <p className="mt-2 text-gray-600">
-          新しい発送をシステムに登録します
-        </p>
-      </div>
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-1 flex items-start justify-center px-4 py-8">
+        <div className="w-full max-w-2xl space-y-6">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-gray-900">新しい発送を登録</h1>
+            <p className="mt-2 text-gray-600">
+              新しい発送をシステムに登録します
+            </p>
+          </div>
 
       {error && (
         <Alert variant="error">
@@ -141,24 +159,21 @@ export default function NewShipmentPage() {
               help="発送する数量を入力してください"
             />
 
-            <Input
+            <Select
               id="destination"
-              label="宛先"
+              label="宛先部署"
               value={formData.destination}
               onChange={(e) => handleChange('destination', e.target.value)}
               required
-              placeholder="例: 東京オフィス, 大阪支社"
-              help="発送先の名称を入力してください"
-            />
-
-            <Input
-              id="trackingNumber"
-              label="追跡番号（任意）"
-              value={formData.trackingNumber}
-              onChange={(e) => handleChange('trackingNumber', e.target.value)}
-              placeholder="例: 123-456-789"
-              help="宅配業者の追跡番号があれば入力してください"
-            />
+              help="発送先の部署を選択してください"
+            >
+              <option value="">部署を選択してください</option>
+              {departments.map((dept) => (
+                <option key={dept.id} value={dept.name}>
+                  {dept.name} ({dept.code})
+                </option>
+              ))}
+            </Select>
 
             <div className="form-group">
               <label className="form-label" htmlFor="notes">
@@ -177,10 +192,10 @@ export default function NewShipmentPage() {
             <Input
               id="shippedAt"
               label="発送日（任意）"
-              type="datetime-local"
+              type="date"
               value={formData.shippedAt}
               onChange={(e) => handleChange('shippedAt', e.target.value)}
-              help="既に発送済みの場合は発送日時を入力してください"
+              help="既に発送済みの場合は発送日を入力してください"
             />
 
             <div className="flex gap-4 pt-6">
@@ -199,6 +214,8 @@ export default function NewShipmentPage() {
           </form>
         </CardContent>
       </Card>
+        </div>
+      </div>
     </div>
   )
 }

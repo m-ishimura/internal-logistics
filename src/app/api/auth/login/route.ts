@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
     }
 
     const token = generateJWT(user)
+    console.log('[Login] Generated token:', token.substring(0, 50) + '...')
     
     const response = NextResponse.json({
       success: true,
@@ -48,6 +49,14 @@ export async function POST(request: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/'
+    })
+    
+    console.log('[Login] Cookie settings:', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7,
       path: '/'
     })
 

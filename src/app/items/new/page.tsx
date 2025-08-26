@@ -88,13 +88,15 @@ export default function NewItemPage() {
   if (!user) return null
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">新しい備品を登録</h1>
-        <p className="mt-2 text-gray-600">
-          新しい備品をシステムに登録します
-        </p>
-      </div>
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-1 flex items-start justify-center px-4 py-8">
+        <div className="w-full max-w-2xl space-y-6">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-gray-900">新しい備品を登録</h1>
+            <p className="mt-2 text-gray-600">
+              新しい備品をシステムに登録します
+            </p>
+          </div>
 
       {error && (
         <Alert variant="error">
@@ -172,6 +174,8 @@ export default function NewItemPage() {
           </form>
         </CardContent>
       </Card>
+        </div>
+      </div>
     </div>
   )
 }

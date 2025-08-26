@@ -146,13 +146,15 @@ export default function BulkShipmentPage() {
   if (!user) return null
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">一括発送登録</h1>
-        <p className="mt-2 text-gray-600">
-          CSVまたはExcelファイルから複数の発送を一括で登録できます
-        </p>
-      </div>
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-1 flex items-start justify-center px-4 py-8">
+        <div className="w-full max-w-4xl space-y-6">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-gray-900">一括発送登録</h1>
+            <p className="mt-2 text-gray-600">
+              CSVまたはExcelファイルから複数の発送を一括で登録できます
+            </p>
+          </div>
 
       {error && (
         <Alert variant="error">
@@ -327,6 +329,8 @@ export default function BulkShipmentPage() {
           </CardContent>
         </Card>
       )}
+        </div>
+      </div>
     </div>
   )
 }

@@ -19,7 +19,18 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const { page, limit, search, sortBy = 'createdAt', sortOrder } = value
+    const { 
+      page, 
+      limit, 
+      search, 
+      itemId, 
+      destination, 
+      sourceDepartmentId, 
+      shippedFromDate, 
+      shippedToDate, 
+      sortBy = 'createdAt', 
+      sortOrder 
+    } = value
     const skip = (page - 1) * limit
 
     let where: any = {}
@@ -29,12 +40,59 @@ export async function GET(request: NextRequest) {
       where.departmentId = departmentId
     }
 
-    if (search) {
+    // 新しい検索条件
+    if (itemId) {
+      where.itemId = itemId
+    }
+
+    if (destination) {
+      where.destination = destination
+    }
+
+    if (sourceDepartmentId && userRole === 'MANAGEMENT_USER') {
+      where.departmentId = sourceDepartmentId
+    }
+
+    if (shippedFromDate || shippedToDate) {
       where.OR = [
-        { destination: { contains: search, mode: 'insensitive' as const } },
-        { trackingNumber: { contains: search, mode: 'insensitive' as const } },
-        { item: { name: { contains: search, mode: 'insensitive' as const } } }
+        // 発送済みの場合は発送日で検索
+        {
+          shippedAt: {
+            ...(shippedFromDate && { gte: new Date(shippedFromDate) }),
+            ...(shippedToDate && { lte: new Date(shippedToDate + 'T23:59:59.999Z') })
+          }
+        },
+        // 未発送の場合は登録日で検索
+        {
+          AND: [
+            { shippedAt: null },
+            {
+              createdAt: {
+                ...(shippedFromDate && { gte: new Date(shippedFromDate) }),
+                ...(shippedToDate && { lte: new Date(shippedToDate + 'T23:59:59.999Z') })
+              }
+            }
+          ]
+        }
       ]
+    }
+
+    // 既存の検索機能（後方互換性のため）
+    if (search) {
+      const searchCondition = {
+        OR: [
+          { destination: { contains: search, mode: 'insensitive' as const } },
+          { trackingNumber: { contains: search, mode: 'insensitive' as const } },
+          { item: { name: { contains: search, mode: 'insensitive' as const } } }
+        ]
+      }
+      
+      if (where.OR) {
+        where.AND = [{ OR: where.OR }, searchCondition]
+        delete where.OR
+      } else {
+        Object.assign(where, searchCondition)
+      }
     }
 
     const [shipments, total] = await Promise.all([

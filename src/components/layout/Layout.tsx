@@ -2,7 +2,6 @@
 
 import { ReactNode } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { SkipLink } from '@/components/ui/SkipLink'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import Header from './Header'
 
@@ -25,7 +24,6 @@ export default function Layout({ children }: LayoutProps) {
   if (!user) {
     return (
       <>
-        <SkipLink />
         <main id="main-content" role="main">
           {children}
         </main>
@@ -35,16 +33,13 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <SkipLink />
       <Header />
       <main 
         id="main-content" 
-        className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8"
+        className="w-full py-6"
         role="main"
       >
-        <div className="px-4 py-6 sm:px-0">
-          {children}
-        </div>
+        {children}
       </main>
     </div>
   )

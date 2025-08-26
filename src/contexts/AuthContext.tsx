@@ -12,30 +12,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
 
   useEffect(() => {
-    checkAuth()
+    // ページがログインページでない場合のみ認証チェック
+    if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+      checkAuth()
+    } else {
+      setLoading(false)
+    }
   }, [])
 
   const checkAuth = async () => {
     try {
+      // 少し待ってからAPIを呼び出す（Cookie設定の時間を確保）
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
       const response = await fetch('/api/auth/me', {
         method: 'GET',
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
       })
       
       if (response.ok) {
-        const { data } = await response.json()
-        setUser(data)
+        const jsonData = await response.json()
+        if (jsonData.success && jsonData.data) {
+          setUser(jsonData.data)
+        }
+      } else if (response.status !== 401) {
+        // 401以外のエラーのみログ出力
+        console.error('Auth check failed with status:', response.status)
       }
+      // 401エラーは未ログイン状態として想定内なので何もしない
     } catch (error) {
-      console.error('Auth check failed:', error)
+      // ネットワークエラーなど予期しないエラーのみログ出力
+      console.error('Auth check network error:', error)
     } finally {
       setLoading(false)
     }
   }
 
+  // ログイン後などに明示的に呼び出す認証チェック
+  const refreshAuth = async () => {
+    await checkAuth()
+  }
+
   const login = async (email: string, password: string) => {
     setLoading(true)
     try {
+      console.log('[AuthContext] Starting login...')
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
@@ -51,9 +76,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const { data } = await response.json()
+      console.log('[AuthContext] Login successful, setting user:', data)
       setUser(data)
+      
+      console.log('[AuthContext] Navigating to dashboard...')
+      // Use router.push instead of window.location.href
       router.push('/dashboard')
+      
+      // ナビゲーション後に認証状態を確認
+      setTimeout(() => refreshAuth(), 200)
     } catch (error) {
+      console.error('[AuthContext] Login failed:', error)
       throw error
     } finally {
       setLoading(false)
@@ -91,7 +124,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       login,
       loginWithEntraId,
       logout,
-      loading
+      loading,
+      refreshAuth
     }}>
       {children}
     </AuthContext.Provider>

@@ -6,26 +6,34 @@ import { useAuth } from '@/contexts/AuthContext'
 import { 
   Button, 
   Input, 
+  Select,
   Card, 
   CardHeader, 
   CardTitle, 
   CardContent,
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
   Alert
 } from '@/components/ui'
-import type { Shipment, PaginatedResponse, PaginationParams } from '@/types'
+import type { Shipment, PaginatedResponse, PaginationParams, Item, Department } from '@/types'
 
 export default function ShipmentsPage() {
   const { user } = useAuth()
   const [shipments, setShipments] = useState<Shipment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [search, setSearch] = useState('')
+  const [items, setItems] = useState<Item[]>([])
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [destinations, setDestinations] = useState<string[]>([])
+  const [showFilters, setShowFilters] = useState(false)
+  
+  // フィルター状態
+  const [filters, setFilters] = useState({
+    itemId: '',
+    destination: '',
+    sourceDepartmentId: '',
+    shippedFromDate: '',
+    shippedToDate: ''
+  })
+  
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 20,
@@ -33,13 +41,17 @@ export default function ShipmentsPage() {
     totalPages: 0
   })
 
-  const fetchShipments = async (params: Partial<PaginationParams> = {}) => {
+  const fetchShipments = async (searchFilters: any = {}, pageNum: number = 1) => {
     try {
       setLoading(true)
       const queryParams = new URLSearchParams({
-        page: String(params.page || 1),
-        limit: String(params.limit || 20),
-        ...(params.search && { search: params.search })
+        page: String(pageNum),
+        limit: String(20),
+        ...(searchFilters.itemId && { itemId: searchFilters.itemId }),
+        ...(searchFilters.destination && { destination: searchFilters.destination }),
+        ...(searchFilters.sourceDepartmentId && { sourceDepartmentId: searchFilters.sourceDepartmentId }),
+        ...(searchFilters.shippedFromDate && { shippedFromDate: searchFilters.shippedFromDate }),
+        ...(searchFilters.shippedToDate && { shippedToDate: searchFilters.shippedToDate })
       })
 
       const response = await fetch(`/api/shipments?${queryParams}`, {
@@ -60,33 +72,86 @@ export default function ShipmentsPage() {
     }
   }
 
+  const fetchItems = async () => {
+    try {
+      const response = await fetch('/api/items?limit=1000', {
+        credentials: 'include'
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setItems(data.data)
+      }
+    } catch (err) {
+      console.error('Failed to fetch items:', err)
+    }
+  }
+
+  const fetchDepartments = async () => {
+    try {
+      const response = await fetch('/api/departments', {
+        credentials: 'include'
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setDepartments(data.data || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch departments:', err)
+    }
+  }
+
+  const fetchDestinations = async () => {
+    try {
+      const response = await fetch('/api/shipments?limit=1000', {
+        credentials: 'include'
+      })
+      if (response.ok) {
+        const data = await response.json()
+        const uniqueDestinations = [...new Set(data.data.map((s: Shipment) => s.destination))]
+        setDestinations(uniqueDestinations.filter(Boolean))
+      }
+    } catch (err) {
+      console.error('Failed to fetch destinations:', err)
+    }
+  }
+
   useEffect(() => {
-    fetchShipments()
-  }, [])
+    if (user) {
+      fetchShipments()
+      fetchItems()
+      fetchDestinations()
+      if (user.role === 'MANAGEMENT_USER') {
+        fetchDepartments()
+      }
+    }
+  }, [user])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    fetchShipments({ search, page: 1 })
+    fetchShipments(filters, 1)
   }
 
   const handlePageChange = (newPage: number) => {
-    fetchShipments({ search, page: newPage })
+    fetchShipments(filters, newPage)
   }
 
-  const getStatusBadge = (shipment: Shipment) => {
-    if (shipment.shippedAt) {
-      return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-          発送済み
-        </span>
-      )
-    }
-    return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-        未発送
-      </span>
-    )
+  const handleFilterChange = (field: string, value: string) => {
+    setFilters(prev => ({ ...prev, [field]: value }))
   }
+
+  const handleClearFilters = () => {
+    setFilters({
+      itemId: '',
+      destination: '',
+      sourceDepartmentId: '',
+      shippedFromDate: '',
+      shippedToDate: ''
+    })
+    fetchShipments({}, 1)
+  }
+
+  const hasActiveFilters = Object.values(filters).some(value => value !== '')
+
 
   if (!user) return null
 
@@ -123,20 +188,133 @@ export default function ShipmentsPage() {
           <CardTitle>発送一覧</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSearch} className="mb-6">
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <Input
-                  placeholder="宛先、備品名、追跡番号で検索..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
-              <Button type="submit" variant="secondary">
-                検索
+          {/* 検索・フィルターセクション */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 2v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                検索・フィルター
+                {hasActiveFilters && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    適用中
+                  </span>
+                )}
               </Button>
+              {hasActiveFilters && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleClearFilters}
+                  className="text-gray-600 hover:text-gray-800"
+                >
+                  クリア
+                </Button>
+              )}
             </div>
-          </form>
+
+            {showFilters && (
+              <form onSubmit={handleSearch} className="p-4 bg-gray-50 rounded-lg border">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                  {/* 備品選択 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      備品
+                    </label>
+                    <Select
+                      value={filters.itemId}
+                      onChange={(e) => handleFilterChange('itemId', e.target.value)}
+                    >
+                      <option value="">すべて</option>
+                      {items.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name} ({item.category})
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+
+                  {/* 発送先選択 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      発送先
+                    </label>
+                    <Select
+                      value={filters.destination}
+                      onChange={(e) => handleFilterChange('destination', e.target.value)}
+                    >
+                      <option value="">すべて</option>
+                      {destinations.map((destination) => (
+                        <option key={destination} value={destination}>
+                          {destination}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+
+                  {/* 発送部署選択（管理者のみ） */}
+                  {user?.role === 'MANAGEMENT_USER' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        発送部署
+                      </label>
+                      <Select
+                        value={filters.sourceDepartmentId}
+                        onChange={(e) => handleFilterChange('sourceDepartmentId', e.target.value)}
+                      >
+                        <option value="">すべて</option>
+                        {departments.map((dept) => (
+                          <option key={dept.id} value={dept.id}>
+                            {dept.name}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+                  )}
+
+                  {/* 発送日範囲 */}
+                  <div className="md:col-span-2 lg:col-span-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      発送日（開始）
+                    </label>
+                    <Input
+                      type="date"
+                      value={filters.shippedFromDate}
+                      onChange={(e) => handleFilterChange('shippedFromDate', e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                  <div className={user?.role === 'MANAGEMENT_USER' ? 'lg:col-start-4' : 'lg:col-start-3'}>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      発送日（終了）
+                    </label>
+                    <Input
+                      type="date"
+                      value={filters.shippedToDate}
+                      onChange={(e) => handleFilterChange('shippedToDate', e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <Button type="submit">
+                    検索
+                  </Button>
+                  <Button type="button" variant="secondary" onClick={handleClearFilters}>
+                    クリア
+                  </Button>
+                </div>
+              </form>
+            )}
+          </div>
 
           {loading ? (
             <div className="flex justify-center py-8">
@@ -144,56 +322,53 @@ export default function ShipmentsPage() {
             </div>
           ) : shipments.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              {search ? '検索結果が見つかりません' : '登録された発送がありません'}
+              {hasActiveFilters ? '検索条件に一致する発送が見つかりません' : '登録された発送がありません'}
             </div>
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>備品名</TableHead>
-                    <TableHead>数量</TableHead>
-                    <TableHead>宛先</TableHead>
-                    <TableHead>追跡番号</TableHead>
-                    <TableHead>発送者</TableHead>
-                    {user.role === 'MANAGEMENT_USER' && <TableHead>部署</TableHead>}
-                    <TableHead>ステータス</TableHead>
-                    <TableHead>登録日</TableHead>
-                    <TableHead>操作</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {shipments.map((shipment) => (
-                    <TableRow key={shipment.id}>
-                      <TableCell className="font-medium">
+              <div className="space-y-2">
+                {/* ヘッダー */}
+                <div className={`grid grid-cols-1 sm:grid-cols-3 ${user.role === 'MANAGEMENT_USER' ? 'lg:grid-cols-6' : 'lg:grid-cols-5'} gap-2 px-3 py-2 border-b border-gray-200`}>
+                  <div className="text-sm font-medium text-gray-700">備品名</div>
+                  <div className="text-sm font-medium text-gray-700">数量</div>
+                  <div className="text-sm font-medium text-gray-700">発送先</div>
+                  <div className="text-sm font-medium text-gray-700">発送者</div>
+                  {user.role === 'MANAGEMENT_USER' && <div className="text-sm font-medium text-gray-700">発送元部署</div>}
+                  <div className="text-sm font-medium text-gray-700">操作</div>
+                </div>
+                
+                {/* データ行 */}
+                {shipments.map((shipment) => (
+                  <div key={shipment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className={`flex-1 grid grid-cols-1 sm:grid-cols-3 ${user.role === 'MANAGEMENT_USER' ? 'lg:grid-cols-6' : 'lg:grid-cols-5'} gap-2 items-center`}>
+                      <div className="font-medium text-gray-900 truncate">
                         {shipment.item?.name || '-'}
-                      </TableCell>
-                      <TableCell>
+                      </div>
+                      <div className="text-sm text-gray-700">
                         {shipment.quantity} {shipment.item?.unit || ''}
-                      </TableCell>
-                      <TableCell>{shipment.destination}</TableCell>
-                      <TableCell>{shipment.trackingNumber || '-'}</TableCell>
-                      <TableCell>{shipment.sender?.name}</TableCell>
+                      </div>
+                      <div className="text-sm text-gray-700">
+                        {shipment.destination}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {shipment.sender?.name}
+                      </div>
                       {user.role === 'MANAGEMENT_USER' && (
-                        <TableCell>{shipment.department?.name}</TableCell>
-                      )}
-                      <TableCell>{getStatusBadge(shipment)}</TableCell>
-                      <TableCell>
-                        {new Date(shipment.createdAt).toLocaleDateString('ja-JP')}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Link href={`/shipments/${shipment.id}/edit`}>
-                            <Button variant="secondary" size="sm">
-                              編集
-                            </Button>
-                          </Link>
+                        <div className="text-sm text-gray-600">
+                          {shipment.department?.name}
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                      )}
+                      <div className="text-sm">
+                        <Link href={`/shipments/${shipment.id}/edit`}>
+                          <Button variant="secondary" size="sm">
+                            編集
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
 
               {pagination.totalPages > 1 && (
                 <div className="flex justify-between items-center mt-6">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button, Input, Card, CardHeader, CardTitle, CardContent, Alert } from '@/components/ui'
 
@@ -10,6 +10,44 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { login, loginWithEntraId, loading } = useAuth()
+
+  // Check for errors from URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const errorParam = urlParams.get('error')
+    const emailParam = urlParams.get('email')
+
+    if (errorParam) {
+      switch (errorParam) {
+        case 'entra_id_error':
+          setError('Entra ID認証に失敗しました。再度お試しください。')
+          break
+        case 'invalid_callback':
+          setError('認証コールバックが無効です。')
+          break
+        case 'invalid_state':
+          setError('セキュリティ検証に失敗しました。再度お試しください。')
+          break
+        case 'token_exchange_failed':
+          setError('認証トークンの取得に失敗しました。')
+          break
+        case 'user_info_failed':
+          setError('ユーザー情報の取得に失敗しました。')
+          break
+        case 'user_not_found':
+          setError(`ユーザーが見つかりません。管理者にお問い合わせください。${emailParam ? ` (${emailParam})` : ''}`)
+          break
+        case 'callback_error':
+          setError('認証処理中にエラーが発生しました。')
+          break
+        default:
+          setError('認証に失敗しました。')
+      }
+      
+      // Clear URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname)
+    }
+  }, [])
 
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -25,7 +63,12 @@ export default function LoginPage() {
     try {
       await login(email, password)
     } catch (err: any) {
-      setError(err.message || 'ログインに失敗しました。')
+      // Handle specific error cases
+      if (err.message.includes('Invalid email or password')) {
+        setError('メールアドレスまたはパスワードが正しくありません。Entra ID認証をご利用の場合は、上のボタンからログインしてください。')
+      } else {
+        setError(err.message || 'ログインに失敗しました。')
+      }
     } finally {
       setIsSubmitting(false)
     }

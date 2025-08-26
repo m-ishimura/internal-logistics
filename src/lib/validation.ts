@@ -25,15 +25,18 @@ export const shipmentSchema = Joi.object({
 export const userSchema = Joi.object({
   email: Joi.string().email().required(),
   name: Joi.string().min(1).max(100).required(),
-  password: Joi.string().min(6).required(),
+  password: Joi.string().min(6).optional(),
   departmentId: Joi.string().required(),
-  role: Joi.string().valid('DEPARTMENT_USER', 'MANAGEMENT_USER').required()
+  role: Joi.string().valid('DEPARTMENT_USER', 'MANAGEMENT_USER').required(),
+  authType: Joi.string().valid('PASSWORD', 'ENTRA_ID').default('PASSWORD'),
+  entraId: Joi.string().optional().allow('')
 })
 
 export const paginationSchema = Joi.object({
   page: Joi.number().integer().min(1).default(1),
-  limit: Joi.number().integer().min(1).max(100).default(20),
+  limit: Joi.number().integer().min(1).max(1000).default(20),
   search: Joi.string().max(100).optional(),
   sortBy: Joi.string().max(50).optional(),
-  sortOrder: Joi.string().valid('asc', 'desc').default('desc')
+  sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
+  forShipment: Joi.string().optional()
 })

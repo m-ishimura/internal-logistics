@@ -82,6 +82,7 @@ export interface AuthContextType {
   loginWithEntraId: () => Promise<void>
   logout: () => void
   loading: boolean
+  refreshAuth: () => Promise<void>
 }
 
 export interface ApiResponse<T = any> {
