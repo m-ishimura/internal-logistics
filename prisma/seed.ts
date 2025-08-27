@@ -120,11 +120,13 @@ async function main() {
       itemId: officeSupplies.id,
       quantity: 3,
       senderId: itUser.id,
-      departmentId: itDept.id,
-      destination: '東京オフィス',
+      shipmentDepartmentId: itDept.id,
+      destinationDepartmentId: salesDept.id,
       trackingNumber: '123-456-789',
       notes: '急送',
-      shippedAt: new Date('2024-01-15T14:30:00Z')
+      shippedAt: new Date('2024-01-15T14:30:00Z'),
+      createdBy: itUser.id,
+      updatedBy: itUser.id
     }
   })
 
@@ -133,9 +135,11 @@ async function main() {
       itemId: businessCards.id,
       quantity: 2,
       senderId: salesUser.id,
-      departmentId: salesDept.id,
-      destination: '大阪支社',
-      notes: '通常配送'
+      shipmentDepartmentId: salesDept.id,
+      destinationDepartmentId: hrDept.id,
+      notes: '通常配送',
+      createdBy: salesUser.id,
+      updatedBy: salesUser.id
     }
   })
 

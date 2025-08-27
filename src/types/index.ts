@@ -45,6 +45,7 @@ export interface Shipment {
   senderId: number
   shipmentDepartmentId: number
   destinationDepartmentId: number
+  shipmentUserId?: number | null
   trackingNumber?: string | null
   notes?: string | null
   shippedAt?: Date | null
@@ -56,6 +57,7 @@ export interface Shipment {
   sender?: User
   shipmentDepartment?: Department
   destinationDepartment?: Department
+  shipmentUser?: User | null
   creator?: User
   updater?: User
 }

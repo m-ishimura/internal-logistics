@@ -22,11 +22,12 @@ model User {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  department      Department @relation(fields: [departmentId], references: [id])
-  shipments       Shipment[]
+  department       Department @relation(fields: [departmentId], references: [id])
+  shipments        Shipment[]
+  shipmentUsers    Shipment[] @relation("ShipmentUser")
   createdShipments Shipment[] @relation("ShipmentCreator")
   updatedShipments Shipment[] @relation("ShipmentUpdater")
-  bulkImports     BulkImport[]
+  bulkImports      BulkImport[]
 
   @@map("users")
 }
@@ -68,6 +69,7 @@ model Shipment {
   senderId               Int       @map("sender_id")
   shipmentDepartmentId   Int       @map("shipment_department_id")
   destinationDepartmentId Int      @map("destination_department_id")
+  shipmentUserId         Int?      @map("shipment_user_id")
   trackingNumber         String?   @map("tracking_number")
   notes                  String?
   shippedAt              DateTime? @map("shipped_at")
@@ -80,6 +82,7 @@ model Shipment {
   sender                 User       @relation(fields: [senderId], references: [id])
   shipmentDepartment     Department @relation("ShipmentDepartment", fields: [shipmentDepartmentId], references: [id])
   destinationDepartment  Department @relation("DestinationDepartment", fields: [destinationDepartmentId], references: [id])
+  shipmentUser           User?      @relation("ShipmentUser", fields: [shipmentUserId], references: [id])
   creator                User       @relation("ShipmentCreator", fields: [createdBy], references: [id])
   updater                User       @relation("ShipmentUpdater", fields: [updatedBy], references: [id])
 

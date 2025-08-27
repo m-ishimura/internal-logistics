@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
     
     // フィルターパラメータ
     const filterDepartmentId = searchParams.get('departmentId')
+    const filterDestinationDepartmentId = searchParams.get('destinationDepartmentId')
     const startDate = searchParams.get('startDate')
     const endDate = searchParams.get('endDate')
     
@@ -47,20 +48,26 @@ export async function GET(request: NextRequest) {
     }
 
     // 部署フィルター
+    const additionalFilters: any[] = []
+    
     if (userRole === 'DEPARTMENT_USER') {
       // 部署ユーザーは自部署の発送のみ表示
-      where = {
-        AND: [
-          { OR: where.OR },
-          { shipmentDepartmentId: parseInt(departmentId!) }
-        ]
+      additionalFilters.push({ shipmentDepartmentId: parseInt(departmentId!) })
+    } else {
+      // 管理者の場合のフィルター
+      if (filterDepartmentId && filterDepartmentId !== 'all') {
+        additionalFilters.push({ shipmentDepartmentId: parseInt(filterDepartmentId) })
       }
-    } else if (filterDepartmentId && filterDepartmentId !== 'all') {
-      // 管理者で特定部署が選択された場合
+      if (filterDestinationDepartmentId && filterDestinationDepartmentId !== 'all') {
+        additionalFilters.push({ destinationDepartmentId: parseInt(filterDestinationDepartmentId) })
+      }
+    }
+    
+    if (additionalFilters.length > 0) {
       where = {
         AND: [
           { OR: where.OR },
-          { shipmentDepartmentId: parseInt(filterDepartmentId) }
+          ...additionalFilters
         ]
       }
     }
@@ -106,6 +113,13 @@ export async function GET(request: NextRequest) {
             id: true,
             name: true,
             code: true
+          }
+        },
+        shipmentUser: {
+          select: {
+            id: true,
+            name: true,
+            email: true
           }
         }
       }

@@ -111,6 +111,9 @@ export async function GET(request: NextRequest) {
           },
           shipmentDepartment: true,
           destinationDepartment: true,
+          shipmentUser: {
+            select: { id: true, name: true, email: true }
+          },
           creator: {
             select: { id: true, name: true, email: true }
           },
@@ -185,6 +188,9 @@ export async function POST(request: NextRequest) {
         },
         shipmentDepartment: true,
         destinationDepartment: true,
+        shipmentUser: {
+          select: { id: true, name: true, email: true }
+        },
         creator: {
           select: { id: true, name: true, email: true }
         },

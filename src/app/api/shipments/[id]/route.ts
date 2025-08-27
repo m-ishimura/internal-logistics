@@ -36,6 +36,9 @@ export async function GET(
         },
         shipmentDepartment: true,
         destinationDepartment: true,
+        shipmentUser: {
+          select: { id: true, name: true, email: true }
+        },
         creator: {
           select: { id: true, name: true, email: true }
         },
@@ -138,6 +141,9 @@ export async function PUT(
         },
         shipmentDepartment: true,
         destinationDepartment: true,
+        shipmentUser: {
+          select: { id: true, name: true, email: true }
+        },
         creator: {
           select: { id: true, name: true, email: true }
         },

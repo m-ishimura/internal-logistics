@@ -18,6 +18,7 @@ export const shipmentSchema = Joi.object({
   senderId: Joi.number().integer().required(),
   shipmentDepartmentId: Joi.number().integer().required(),
   destinationDepartmentId: Joi.number().integer().required(),
+  shipmentUserId: Joi.number().integer().optional().allow(null),
   trackingNumber: Joi.string().max(100).optional().allow(''),
   notes: Joi.string().max(500).optional().allow(''),
   shippedAt: Joi.date().optional(),

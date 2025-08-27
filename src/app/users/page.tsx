@@ -171,28 +171,38 @@ export default function UsersPage() {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto px-8 py-8">
-        <div className="text-center">読み込み中...</div>
+      <div className="min-h-screen flex flex-col">
+        <div className="flex-1 flex items-start justify-center px-4 py-8">
+          <div className="text-center">読み込み中...</div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-8 space-y-8">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">ユーザー管理</h1>
-        <Button
-          onClick={() => {
-            resetForm()
-            setEditingUser(null)
-            setShowAddModal(true)
-          }}
-        >
-          新しいユーザーを追加
-        </Button>
-      </div>
-      
-      <Card>
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-1 flex items-start justify-center px-4 py-8">
+        <div className="w-full max-w-6xl space-y-8">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-gray-900">ユーザー管理</h1>
+            <p className="mt-2 text-gray-600">
+              システム内のユーザーを管理します
+            </p>
+          </div>
+
+          <div className="flex justify-end">
+            <Button
+              onClick={() => {
+                resetForm()
+                setEditingUser(null)
+                setShowAddModal(true)
+              }}
+            >
+              新しいユーザーを追加
+            </Button>
+          </div>
+          
+          <Card>
         <CardHeader>
           <CardTitle>ユーザー一覧</CardTitle>
         </CardHeader>
@@ -206,22 +216,22 @@ export default function UsersPage() {
               <table className="min-w-full table-auto">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-3 px-4">名前</th>
-                    <th className="text-left py-3 px-4">メール</th>
-                    <th className="text-left py-3 px-4">部署</th>
-                    <th className="text-left py-3 px-4">役割</th>
-                    <th className="text-left py-3 px-4">認証方式</th>
-                    <th className="text-left py-3 px-4">作成日</th>
-                    <th className="text-left py-3 px-4">操作</th>
+                    <th className="text-center py-3 px-4">名前</th>
+                    <th className="text-center py-3 px-4">メール</th>
+                    <th className="text-center py-3 px-4">部署</th>
+                    <th className="text-center py-3 px-4">役割</th>
+                    <th className="text-center py-3 px-4">認証方式</th>
+                    <th className="text-center py-3 px-4">作成日</th>
+                    <th className="text-center py-3 px-4">操作</th>
                   </tr>
                 </thead>
                 <tbody>
                   {users.map((u) => (
                     <tr key={u.id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4 font-medium">{u.name}</td>
-                      <td className="py-3 px-4">{u.email}</td>
-                      <td className="py-3 px-4">{u.department?.name || '-'}</td>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 font-medium text-center">{u.name}</td>
+                      <td className="py-3 px-4 text-center">{u.email}</td>
+                      <td className="py-3 px-4 text-center">{u.department?.name || '-'}</td>
+                      <td className="py-3 px-4 text-center">
                         <span className={`px-2 py-1 rounded-full text-xs ${
                           u.role === 'MANAGEMENT_USER'
                             ? 'bg-red-100 text-red-800' 
@@ -230,7 +240,7 @@ export default function UsersPage() {
                           {u.role === 'MANAGEMENT_USER' ? '管理者' : '一般ユーザー'}
                         </span>
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 text-center">
                         <span className={`px-2 py-1 rounded-full text-xs ${
                           u.authType === 'ENTRA_ID'
                             ? 'bg-green-100 text-green-800' 
@@ -239,11 +249,11 @@ export default function UsersPage() {
                           {u.authType === 'ENTRA_ID' ? 'Entra ID' : 'パスワード'}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-sm text-gray-600">
+                      <td className="py-3 px-4 text-sm text-gray-600 text-center">
                         {new Date(u.createdAt).toLocaleDateString('ja-JP')}
                       </td>
-                      <td className="py-3 px-4">
-                        <div className="flex space-x-2">
+                      <td className="py-3 px-4 text-center">
+                        <div className="flex space-x-2 justify-center">
                           <button
                             onClick={() => openEditModal(u)}
                             className="text-blue-600 hover:text-blue-800 text-sm"
@@ -551,6 +561,8 @@ export default function UsersPage() {
           </div>
         </div>
       )}
+        </div>
+      </div>
     </div>
   )
 }

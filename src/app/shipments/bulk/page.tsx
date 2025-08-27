@@ -128,9 +128,9 @@ export default function BulkShipmentPage() {
   }
 
   const downloadTemplate = () => {
-    const csvContent = 'item_name,quantity,unit,destination,tracking_number,notes,shipped_at\n' +
-                      'オフィス用品セット,2,セット,東京オフィス,123-456-789,急送,2024-01-15 14:30\n' +
-                      'A4用紙,10,束,大阪支社,,通常配送,'
+    const csvContent = 'item_name,quantity,destination_department_name,shipment_user_name,tracking_number,notes,shipped_at\n' +
+                      'オフィス用品セット,2,東京オフィス,田中太郎,123-456-789,急送,2024-01-15 14:30\n' +
+                      'A4用紙,10,大阪支社,,通常配送,'
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
@@ -247,11 +247,19 @@ export default function BulkShipmentPage() {
               </p>
             </div>
 
+            <div className="bg-blue-50 p-4 rounded-md mb-4">
+              <h4 className="font-medium text-blue-800 mb-1">発送元部署について</h4>
+              <p className="text-sm text-blue-700">
+                発送元部署は自動的にあなたの所属部署（{user?.department?.name}）に設定されます。CSVに発送元部署の列は不要です。
+              </p>
+            </div>
             <div className="bg-yellow-50 p-4 rounded-md">
               <h4 className="font-medium text-yellow-800 mb-1">注意事項</h4>
               <ul className="text-sm text-yellow-700 space-y-1">
                 <li>• 備品名は既存の備品と正確に一致させてください</li>
                 <li>• 数量は正の整数で入力してください</li>
+                <li>• 宛先部署名は既存の部署名と正確に一致させてください</li>
+                <li>• 発送先担当者名は該当部署に所属するユーザー名と正確に一致させてください（任意）</li>
                 <li>• 日時は YYYY-MM-DD HH:MM 形式で入力してください</li>
               </ul>
             </div>

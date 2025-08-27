@@ -360,11 +360,12 @@ export default function ShipmentsPage() {
             <>
               <div className="space-y-2">
                 {/* ヘッダー */}
-                <div className={`grid grid-cols-1 sm:grid-cols-4 ${user.role === 'MANAGEMENT_USER' ? 'lg:grid-cols-7' : 'lg:grid-cols-6'} gap-2 px-3 py-2 border-b border-gray-200`}>
+                <div className={`grid grid-cols-1 sm:grid-cols-4 ${user.role === 'MANAGEMENT_USER' ? 'lg:grid-cols-8' : 'lg:grid-cols-7'} gap-2 px-3 py-2 border-b border-gray-200`}>
                   <div className="text-sm font-medium text-gray-700">発送日</div>
                   <div className="text-sm font-medium text-gray-700">備品名</div>
                   <div className="text-sm font-medium text-gray-700">数量</div>
                   <div className="text-sm font-medium text-gray-700">発送先</div>
+                  <div className="text-sm font-medium text-gray-700">担当者</div>
                   <div className="text-sm font-medium text-gray-700">発送者</div>
                   {user.role === 'MANAGEMENT_USER' && <div className="text-sm font-medium text-gray-700">発送元部署</div>}
                   <div className="text-sm font-medium text-gray-700">操作</div>
@@ -373,7 +374,7 @@ export default function ShipmentsPage() {
                 {/* データ行 */}
                 {shipments.map((shipment) => (
                   <div key={shipment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <div className={`flex-1 grid grid-cols-1 sm:grid-cols-4 ${user.role === 'MANAGEMENT_USER' ? 'lg:grid-cols-7' : 'lg:grid-cols-6'} gap-2 items-center`}>
+                    <div className={`flex-1 grid grid-cols-1 sm:grid-cols-4 ${user.role === 'MANAGEMENT_USER' ? 'lg:grid-cols-8' : 'lg:grid-cols-7'} gap-2 items-center`}>
                       <div className="text-sm text-gray-700">
                         {shipment.shippedAt 
                           ? new Date(shipment.shippedAt).toLocaleDateString('ja-JP')
@@ -388,6 +389,9 @@ export default function ShipmentsPage() {
                       </div>
                       <div className="text-sm text-gray-700">
                         {shipment.destinationDepartment?.name || '-'}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {shipment.shipmentUser?.name || '-'}
                       </div>
                       <div className="text-sm text-gray-600">
                         {shipment.sender?.name}

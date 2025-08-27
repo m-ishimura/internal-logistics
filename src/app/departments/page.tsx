@@ -147,28 +147,38 @@ export default function DepartmentsPage() {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto px-8 py-8">
-        <div className="text-center">読み込み中...</div>
+      <div className="min-h-screen flex flex-col">
+        <div className="flex-1 flex items-start justify-center px-4 py-8">
+          <div className="text-center">読み込み中...</div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-8 space-y-8">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">部署管理</h1>
-        <Button
-          onClick={() => {
-            resetForm()
-            setEditingDepartment(null)
-            setShowAddModal(true)
-          }}
-        >
-          新しい部署を追加
-        </Button>
-      </div>
-      
-      <Card>
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-1 flex items-start justify-center px-4 py-8">
+        <div className="w-full max-w-4xl space-y-8">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-gray-900">部署管理</h1>
+            <p className="mt-2 text-gray-600">
+              システム内の部署を管理します
+            </p>
+          </div>
+
+          <div className="flex justify-end">
+            <Button
+              onClick={() => {
+                resetForm()
+                setEditingDepartment(null)
+                setShowAddModal(true)
+              }}
+            >
+              新しい部署を追加
+            </Button>
+          </div>
+          
+          <Card>
         <CardHeader>
           <CardTitle>部署一覧</CardTitle>
         </CardHeader>
@@ -182,19 +192,19 @@ export default function DepartmentsPage() {
               <table className="min-w-full table-auto">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-3 px-4">部署名</th>
-                    <th className="text-left py-3 px-4">部署コード</th>
-                    <th className="text-left py-3 px-4">管理部署</th>
-                    <th className="text-left py-3 px-4">作成日</th>
-                    <th className="text-left py-3 px-4">操作</th>
+                    <th className="text-center py-3 px-4">部署名</th>
+                    <th className="text-center py-3 px-4">部署コード</th>
+                    <th className="text-center py-3 px-4">管理部署</th>
+                    <th className="text-center py-3 px-4">作成日</th>
+                    <th className="text-center py-3 px-4">操作</th>
                   </tr>
                 </thead>
                 <tbody>
                   {departments.map((dept) => (
                     <tr key={dept.id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4 font-medium">{dept.name}</td>
-                      <td className="py-3 px-4">{dept.code}</td>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 font-medium text-center">{dept.name}</td>
+                      <td className="py-3 px-4 text-center">{dept.code}</td>
+                      <td className="py-3 px-4 text-center">
                         <span className={`px-2 py-1 rounded-full text-xs ${
                           dept.isManagement 
                             ? 'bg-blue-100 text-blue-800' 
@@ -203,11 +213,11 @@ export default function DepartmentsPage() {
                           {dept.isManagement ? '管理部署' : '一般部署'}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-sm text-gray-600">
+                      <td className="py-3 px-4 text-sm text-gray-600 text-center">
                         {new Date(dept.createdAt).toLocaleDateString('ja-JP')}
                       </td>
-                      <td className="py-3 px-4">
-                        <div className="flex space-x-2">
+                      <td className="py-3 px-4 text-center">
+                        <div className="flex space-x-2 justify-center">
                           <button
                             onClick={() => {
                               console.log('Edit button clicked for dept:', dept)
@@ -373,6 +383,8 @@ export default function DepartmentsPage() {
           </div>
         </div>
       )}
+        </div>
+      </div>
     </div>
   )
 }

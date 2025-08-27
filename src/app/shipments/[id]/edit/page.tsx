@@ -13,7 +13,7 @@ import {
   CardContent,
   Alert
 } from '@/components/ui'
-import type { Item, Department, Shipment } from '@/types'
+import type { Item, Department, Shipment, User } from '@/types'
 
 export default function EditShipmentPage() {
   const { user } = useAuth()
@@ -26,6 +26,10 @@ export default function EditShipmentPage() {
   const [error, setError] = useState('')
   const [items, setItems] = useState<Item[]>([])
   const [departments, setDepartments] = useState<Department[]>([])
+  const [users, setUsers] = useState<User[]>([])
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([])
+  const [userSearchTerm, setUserSearchTerm] = useState('')
+  const [showUserDropdown, setShowUserDropdown] = useState(false)
   const [shipment, setShipment] = useState<Shipment | null>(null)
   const [formData, setFormData] = useState({
     itemId: '',
@@ -33,6 +37,7 @@ export default function EditShipmentPage() {
     senderId: '',
     shipmentDepartmentId: '',
     destinationDepartmentId: '',
+    shipmentUserId: '',
     trackingNumber: '',
     notes: '',
     shippedAt: ''
@@ -46,10 +51,10 @@ export default function EditShipmentPage() {
   }, [shipmentId, user])
 
   useEffect(() => {
-    if (shipmentId && departments.length > 0) {
+    if (shipmentId && departments.length > 0 && items.length > 0) {
       fetchShipment()
     }
-  }, [shipmentId, departments])
+  }, [shipmentId, departments, items])
 
   const fetchShipment = async () => {
     try {
@@ -65,18 +70,29 @@ export default function EditShipmentPage() {
       const shipment = data.data
       setShipment(shipment)
       
+      
       // 既存データの場合
       
       setFormData({
-        itemId: shipment.itemId,
+        itemId: shipment.itemId.toString(),
         quantity: shipment.quantity.toString(),
         senderId: shipment.senderId.toString(),
         shipmentDepartmentId: shipment.shipmentDepartmentId.toString(),
         destinationDepartmentId: shipment.destinationDepartmentId.toString(),
+        shipmentUserId: shipment.shipmentUserId ? shipment.shipmentUserId.toString() : '',
         trackingNumber: shipment.trackingNumber || '',
         notes: shipment.notes || '',
         shippedAt: shipment.shippedAt ? new Date(shipment.shippedAt).toISOString().slice(0, 10) : ''
       })
+
+      // 発送先部署のユーザーを取得
+      if (shipment.destinationDepartmentId) {
+        fetchUsers(shipment.destinationDepartmentId.toString())
+      }
+      // 発送先担当者の検索用初期化
+      if (shipment.shipmentUser) {
+        setUserSearchTerm(shipment.shipmentUser.name)
+      }
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -86,7 +102,9 @@ export default function EditShipmentPage() {
 
   const fetchItems = async () => {
     try {
-      const response = await fetch('/api/items?limit=1000&forShipment=true', {
+      // For edit form, get all items (not just forShipment=true)
+      // to ensure the current shipment's item is included
+      const response = await fetch('/api/items?limit=1000', {
         credentials: 'include'
       })
       
@@ -101,7 +119,7 @@ export default function EditShipmentPage() {
 
   const fetchDepartments = async () => {
     try {
-      const response = await fetch('/api/departments?limit=1000&forShipment=true', {
+      const response = await fetch('/api/departments?limit=1000&forShipment=true&sortBy=id&sortOrder=asc', {
         credentials: 'include'
       })
       
@@ -111,6 +129,36 @@ export default function EditShipmentPage() {
       }
     } catch (err) {
       console.error('Failed to fetch departments:', err)
+    }
+  }
+
+  const fetchUsers = async (departmentId: string) => {
+    if (!departmentId || departmentId === '') {
+      setUsers([])
+      setFilteredUsers([])
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/users/by-department/${departmentId}`, {
+        credentials: 'include'
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        const userData = data.data || []
+        setUsers(userData)
+        setFilteredUsers(userData)
+        
+        // Don't auto-focus on edit form to avoid interrupting user interaction
+      } else {
+        setUsers([])
+        setFilteredUsers([])
+      }
+    } catch (err) {
+      console.error('Failed to fetch users:', err)
+      setUsers([])
+      setFilteredUsers([])
     }
   }
 
@@ -126,10 +174,11 @@ export default function EditShipmentPage() {
         senderId: parseInt(formData.senderId),
         shipmentDepartmentId: parseInt(formData.shipmentDepartmentId),
         destinationDepartmentId: parseInt(formData.destinationDepartmentId),
-        createdBy: parseInt(userId),
-        updatedBy: parseInt(userId),
+        shipmentUserId: formData.shipmentUserId ? parseInt(formData.shipmentUserId) : null,
+        createdBy: user!.id,
+        updatedBy: user!.id,
         ...(formData.shippedAt && { shippedAt: new Date(formData.shippedAt + 'T00:00:00.000Z').toISOString() })
-      })
+      }
 
       const response = await fetch(`/api/shipments/${shipmentId}`, {
         method: 'PUT',
@@ -155,6 +204,40 @@ export default function EditShipmentPage() {
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  const handleDestinationDepartmentChange = async (value: string) => {
+    setFormData(prev => ({ ...prev, destinationDepartmentId: value, shipmentUserId: '' }))
+    setUserSearchTerm('')
+    setShowUserDropdown(false)
+    if (value) {
+      await fetchUsers(value)
+    } else {
+      setUsers([])
+      setFilteredUsers([])
+    }
+  }
+
+  const handleUserSearch = (searchTerm: string) => {
+    setUserSearchTerm(searchTerm)
+    if (searchTerm.trim()) {
+      const filtered = users.filter(user => 
+        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      setFilteredUsers(filtered)
+      setShowUserDropdown(true)
+    } else {
+      setFilteredUsers(users)
+      setShowUserDropdown(users.length > 0)
+      setFormData(prev => ({ ...prev, shipmentUserId: '' }))
+    }
+  }
+
+  const handleUserSelect = (user: User) => {
+    setFormData(prev => ({ ...prev, shipmentUserId: user.id.toString() }))
+    setUserSearchTerm(user.name)
+    setShowUserDropdown(false)
   }
 
   if (!user) return null
@@ -210,7 +293,7 @@ export default function EditShipmentPage() {
 
                 <Input
                   id="quantity"
-                  label={`数量${selectedItem ? ` (${selectedItem.unit})` : ''}`}
+                  label="数量"
                   type="number"
                   min="1"
                   value={formData.quantity}
@@ -250,7 +333,7 @@ export default function EditShipmentPage() {
                   id="destinationDepartmentId"
                   label="宛先部署"
                   value={formData.destinationDepartmentId}
-                  onChange={(e) => handleChange('destinationDepartmentId', e.target.value)}
+                  onChange={(e) => handleDestinationDepartmentChange(e.target.value)}
                   required
                   help="発送先の部署を選択してください"
                 >
@@ -261,6 +344,58 @@ export default function EditShipmentPage() {
                     </option>
                   ))}
                 </Select>
+
+                {/* 発送先担当者選択 */}
+                <div className="form-group">
+                  <label className="form-label" htmlFor="shipmentUserId">
+                    発送先担当者（任意）
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="shipmentUserId"
+                      type="text"
+                      className="form-input"
+                      placeholder={formData.destinationDepartmentId ? "担当者名を入力して検索..." : "まず宛先部署を選択してください"}
+                      value={userSearchTerm}
+                      onChange={(e) => handleUserSearch(e.target.value)}
+                      onFocus={() => {
+                        if (users.length > 0) {
+                          setShowUserDropdown(true)
+                        }
+                      }}
+                      onBlur={(e) => {
+                        // Allow time for dropdown click
+                        setTimeout(() => {
+                          const activeElement = document.activeElement
+                          const currentTarget = e.currentTarget
+                          if (!activeElement || !currentTarget || !currentTarget.contains(activeElement)) {
+                            setShowUserDropdown(false)
+                          }
+                        }, 200)
+                      }}
+                      disabled={!formData.destinationDepartmentId}
+                    />
+                    
+                    {showUserDropdown && filteredUsers.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                        {filteredUsers.map((user) => (
+                          <button
+                            key={user.id}
+                            type="button"
+                            className="w-full px-4 py-2 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none border-none bg-transparent"
+                            onClick={() => handleUserSelect(user)}
+                          >
+                            <div className="font-medium text-gray-900">{user.name}</div>
+                            <div className="text-sm text-gray-500">{user.email}</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <p className="form-help">
+                    発送先の担当者を指定する場合は入力してください（任意）
+                  </p>
+                </div>
 
                 <div className="form-group">
                   <label className="form-label" htmlFor="notes">
@@ -278,11 +413,12 @@ export default function EditShipmentPage() {
 
                 <Input
                   id="shippedAt"
-                  label="発送日（任意）"
+                  label="発送日"
                   type="date"
                   value={formData.shippedAt}
                   onChange={(e) => handleChange('shippedAt', e.target.value)}
-                  help="既に発送済みの場合は発送日を入力してください"
+                  required
+                  help="発送日を入力してください"
                 />
 
                 <div className="flex gap-4 pt-6">

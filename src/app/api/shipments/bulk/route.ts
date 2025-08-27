@@ -75,15 +75,15 @@ export async function POST(request: NextRequest) {
 
       try {
         // Validate required fields
-        if (!row.item_name || !row.quantity || !row.destination) {
-          throw new Error('必須項目（item_name, quantity, destination）が不足しています')
+        if (!row.item_name || !row.quantity || !row.destination_department_name) {
+          throw new Error('必須項目（item_name, quantity, destination_department_name）が不足しています')
         }
 
         // Find item by name
         const item = await prisma.item.findFirst({
           where: {
             name: row.item_name.toString().trim(),
-            departmentId: departmentId // Only items from user's department
+            departmentId: parseInt(departmentId) // Only items from user's department
           }
         })
 
@@ -94,6 +94,34 @@ export async function POST(request: NextRequest) {
         const quantity = parseInt(row.quantity)
         if (isNaN(quantity) || quantity <= 0) {
           throw new Error('数量は正の整数で入力してください')
+        }
+
+        // Find destination department by name
+        const destinationDepartment = await prisma.department.findFirst({
+          where: {
+            name: row.destination_department_name.toString().trim()
+          }
+        })
+
+        if (!destinationDepartment) {
+          throw new Error(`宛先部署「${row.destination_department_name}」が見つかりません`)
+        }
+
+        // Find shipment user by name if provided
+        let shipmentUserId: number | null = null
+        if (row.shipment_user_name && row.shipment_user_name.toString().trim()) {
+          const shipmentUser = await prisma.user.findFirst({
+            where: {
+              name: row.shipment_user_name.toString().trim(),
+              departmentId: destinationDepartment.id
+            }
+          })
+
+          if (shipmentUser) {
+            shipmentUserId = shipmentUser.id
+          } else {
+            throw new Error(`発送先部署「${destinationDepartment.name}」にユーザー「${row.shipment_user_name}」が見つかりません`)
+          }
         }
 
         // Parse shipped date if provided
@@ -110,12 +138,15 @@ export async function POST(request: NextRequest) {
           data: {
             itemId: item.id,
             quantity: quantity,
-            senderId: userId,
-            departmentId: departmentId,
-            destination: row.destination.toString().trim(),
+            senderId: parseInt(userId),
+            shipmentDepartmentId: parseInt(departmentId),
+            destinationDepartmentId: destinationDepartment.id,
+            shipmentUserId: shipmentUserId,
             trackingNumber: row.tracking_number ? row.tracking_number.toString().trim() : undefined,
             notes: row.notes ? row.notes.toString().trim() : undefined,
-            shippedAt: shippedAt
+            shippedAt: shippedAt,
+            createdBy: parseInt(userId),
+            updatedBy: parseInt(userId)
           }
         })
 

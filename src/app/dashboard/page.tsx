@@ -11,6 +11,7 @@ export default function DashboardPage() {
   const [departments, setDepartments] = useState<Department[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedDepartment, setSelectedDepartment] = useState('all')
+  const [selectedDestinationDepartment, setSelectedDestinationDepartment] = useState('all')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
 
@@ -29,7 +30,7 @@ export default function DashboardPage() {
       fetchRecentShipments()
       fetchDepartments()
     }
-  }, [user, selectedDepartment, startDate, endDate])
+  }, [user, selectedDepartment, selectedDestinationDepartment, startDate, endDate])
 
   const fetchRecentShipments = async () => {
     try {
@@ -37,6 +38,9 @@ export default function DashboardPage() {
       const params = new URLSearchParams()
       if (selectedDepartment !== 'all') {
         params.append('departmentId', selectedDepartment)
+      }
+      if (selectedDestinationDepartment !== 'all') {
+        params.append('destinationDepartmentId', selectedDestinationDepartment)
       }
       if (startDate) {
         params.append('startDate', startDate)
@@ -62,7 +66,7 @@ export default function DashboardPage() {
 
   const fetchDepartments = async () => {
     try {
-      const response = await fetch('/api/departments?limit=1000&forShipment=true', {
+      const response = await fetch('/api/departments?limit=1000&forShipment=true&sortBy=id&sortOrder=asc', {
         credentials: 'include'
       })
       
@@ -169,7 +173,7 @@ export default function DashboardPage() {
             <CardContent>
               {/* フィルターコントロール */}
               <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {user.role === 'MANAGEMENT_USER' && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -180,6 +184,24 @@ export default function DashboardPage() {
                         onChange={(e) => setSelectedDepartment(e.target.value)}
                       >
                         <option value="all">すべての発送元</option>
+                        {departments.map((dept) => (
+                          <option key={dept.id} value={dept.id}>
+                            {dept.name}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+                  )}
+                  {user.role === 'MANAGEMENT_USER' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        発送先フィルター
+                      </label>
+                      <Select
+                        value={selectedDestinationDepartment}
+                        onChange={(e) => setSelectedDestinationDepartment(e.target.value)}
+                      >
+                        <option value="all">すべての発送先</option>
                         {departments.map((dept) => (
                           <option key={dept.id} value={dept.id}>
                             {dept.name}
@@ -219,19 +241,23 @@ export default function DashboardPage() {
               ) : shipments.length > 0 ? (
                 <div className="space-y-2">
                   {/* ヘッダー */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-2 px-3 py-2 border-b border-gray-200">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-7 gap-2 px-3 py-2 border-b border-gray-200">
+                    <div className="text-sm font-medium text-gray-700">発送日</div>
                     <div className="text-sm font-medium text-gray-700">備品名</div>
                     <div className="text-sm font-medium text-gray-700">数量</div>
                     <div className="text-sm font-medium text-gray-700">発送先</div>
+                    <div className="text-sm font-medium text-gray-700">担当者</div>
                     <div className="text-sm font-medium text-gray-700">発送者</div>
                     <div className="text-sm font-medium text-gray-700">発送元部署</div>
-                    <div className="text-sm font-medium text-gray-700">発送日</div>
                   </div>
                   
                   {/* データ行 */}
                   {shipments.map((shipment) => (
                     <div key={shipment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-2 items-center">
+                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-7 gap-2 items-center">
+                        <div className="text-sm text-gray-500">
+                          {shipment.shippedAt ? formatDate(shipment.shippedAt) : formatDate(shipment.createdAt)}
+                        </div>
                         <div className="font-medium text-gray-900 truncate">
                           {shipment.item?.name}
                         </div>
@@ -242,13 +268,13 @@ export default function DashboardPage() {
                           {shipment.destinationDepartment?.name || (shipment.destinationDepartmentId ? getDepartmentNameById(shipment.destinationDepartmentId) : '-')}
                         </div>
                         <div className="text-sm text-gray-600">
+                          {shipment.shipmentUser?.name || '-'}
+                        </div>
+                        <div className="text-sm text-gray-600">
                           {shipment.sender?.name}
                         </div>
                         <div className="text-sm text-gray-600">
                           {shipment.shipmentDepartment?.name}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {shipment.shippedAt ? formatDate(shipment.shippedAt) : formatDate(shipment.createdAt)}
                         </div>
                       </div>
                     </div>

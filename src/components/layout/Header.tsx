@@ -93,13 +93,6 @@ export default function Header() {
                     >
                       ユーザー管理
                     </Link>
-                    <Link 
-                      href="/reports"
-                      className="block px-4 py-3 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
-                      onClick={() => setAdminMenuOpen(false)}
-                    >
-                      レポート
-                    </Link>
                   </div>
                 )}
               </div>
@@ -205,13 +198,6 @@ export default function Header() {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   ユーザー管理
-                </Link>
-                <Link 
-                  href="/reports" 
-                  className="block px-6 py-3 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  レポート
                 </Link>
               </div>
             )}

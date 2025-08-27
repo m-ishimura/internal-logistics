@@ -13,7 +13,7 @@ import {
   CardContent,
   Alert
 } from '@/components/ui'
-import type { Item, Department } from '@/types'
+import type { Item, Department, User } from '@/types'
 
 export default function NewShipmentPage() {
   const { user } = useAuth()
@@ -23,12 +23,17 @@ export default function NewShipmentPage() {
   const [error, setError] = useState('')
   const [items, setItems] = useState<Item[]>([])
   const [departments, setDepartments] = useState<Department[]>([])
+  const [users, setUsers] = useState<User[]>([])
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([])
+  const [userSearchTerm, setUserSearchTerm] = useState('')
+  const [showUserDropdown, setShowUserDropdown] = useState(false)
   const [formData, setFormData] = useState({
     itemId: searchParams?.get('itemId') || '',
     quantity: '',
     senderId: '',
     shipmentDepartmentId: '',
     destinationDepartmentId: '',
+    shipmentUserId: '',
     trackingNumber: '',
     notes: '',
     shippedAt: ''
@@ -37,7 +42,16 @@ export default function NewShipmentPage() {
   useEffect(() => {
     fetchItems()
     fetchDepartments()
-  }, [])
+    
+    // ログインユーザーの部署を発送元部署に自動設定
+    if (user?.departmentId) {
+      setFormData(prev => ({
+        ...prev,
+        shipmentDepartmentId: user.departmentId.toString(),
+        senderId: user.id.toString()
+      }))
+    }
+  }, [user])
 
   const fetchItems = async () => {
     try {
@@ -81,8 +95,9 @@ export default function NewShipmentPage() {
         senderId: parseInt(formData.senderId),
         shipmentDepartmentId: parseInt(formData.shipmentDepartmentId),
         destinationDepartmentId: parseInt(formData.destinationDepartmentId),
-        createdBy: parseInt(userId),
-        updatedBy: parseInt(userId),
+        shipmentUserId: formData.shipmentUserId ? parseInt(formData.shipmentUserId) : null,
+        createdBy: user!.id,
+        updatedBy: user!.id,
         ...(formData.shippedAt && { shippedAt: new Date(formData.shippedAt + 'T00:00:00.000Z').toISOString() })
       }
 
@@ -106,6 +121,55 @@ export default function NewShipmentPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const fetchUsersByDepartment = async (departmentId: string) => {
+    if (!departmentId || departmentId === '') {
+      setUsers([])
+      setFilteredUsers([])
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/users/by-department/${departmentId}`, {
+        credentials: 'include'
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setUsers(data.data || [])
+        setFilteredUsers(data.data || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch users:', err)
+      setUsers([])
+      setFilteredUsers([])
+    }
+  }
+
+  const filterUsers = (searchTerm: string) => {
+    if (!searchTerm) {
+      setFilteredUsers(users)
+      return
+    }
+
+    const filtered = users.filter(user => 
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    setFilteredUsers(filtered)
+  }
+
+  const handleDestinationDepartmentChange = async (departmentId: string) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      destinationDepartmentId: departmentId,
+      shipmentUserId: ''
+    }))
+    setUserSearchTerm('')
+    setShowUserDropdown(false)
+    
+    await fetchUsersByDepartment(departmentId)
   }
 
   const handleChange = (field: string, value: string) => {
@@ -177,27 +241,23 @@ export default function NewShipmentPage() {
               help="追跡番号がある場合は入力してください"
             />
 
-            <Select
-              id="shipmentDepartmentId"
-              label="発送元部署"
-              value={formData.shipmentDepartmentId}
-              onChange={(e) => handleChange('shipmentDepartmentId', e.target.value)}
-              required
-              help="発送元の部署を選択してください"
-            >
-              <option value="">部署を選択してください</option>
-              {departments.map((dept) => (
-                <option key={dept.id} value={dept.id}>
-                  {dept.name} {dept.code && `(${dept.code})`}
-                </option>
-              ))}
-            </Select>
+            <div className="form-group">
+              <label className="form-label">発送元部署</label>
+              <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                <span className="text-gray-900 font-medium">
+                  {user?.department?.name || '部署情報を取得中...'}
+                </span>
+                <p className="text-sm text-gray-600 mt-1">
+                  発送元部署は自動的にあなたの所属部署に設定されます
+                </p>
+              </div>
+            </div>
 
             <Select
               id="destinationDepartmentId"
               label="宛先部署"
               value={formData.destinationDepartmentId}
-              onChange={(e) => handleChange('destinationDepartmentId', e.target.value)}
+              onChange={(e) => handleDestinationDepartmentChange(e.target.value)}
               required
               help="発送先の部署を選択してください"
             >
@@ -208,6 +268,71 @@ export default function NewShipmentPage() {
                 </option>
               ))}
             </Select>
+
+            {/* 発送先担当者選択 */}
+            <div className="form-group">
+              <label className="form-label">
+                発送先担当者（任意）
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder={formData.destinationDepartmentId ? "担当者を検索..." : "先に宛先部署を選択してください"}
+                  value={userSearchTerm}
+                  onChange={(e) => {
+                    setUserSearchTerm(e.target.value)
+                    filterUsers(e.target.value)
+                  }}
+                  onFocus={() => {
+                    if (formData.destinationDepartmentId && users.length > 0) {
+                      setShowUserDropdown(true)
+                    }
+                  }}
+                  onBlur={() => {
+                    // 少し遅延を入れてクリックイベントが処理されるようにする
+                    setTimeout(() => setShowUserDropdown(false), 200)
+                  }}
+                  disabled={!formData.destinationDepartmentId}
+                />
+                {showUserDropdown && formData.destinationDepartmentId && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    <div 
+                      className="p-3 hover:bg-gray-100 cursor-pointer border-b border-gray-200"
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, shipmentUserId: '' }))
+                        setUserSearchTerm('')
+                        setShowUserDropdown(false)
+                      }}
+                    >
+                      <span className="text-gray-500">担当者を指定しない</span>
+                    </div>
+                    {filteredUsers.map((user) => (
+                      <div
+                        key={user.id}
+                        className="p-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, shipmentUserId: user.id.toString() }))
+                          setUserSearchTerm(user.name)
+                          setShowUserDropdown(false)
+                        }}
+                      >
+                        <div className="font-medium text-gray-900">{user.name}</div>
+                        <div className="text-sm text-gray-600">{user.email}</div>
+                      </div>
+                    ))}
+                    {filteredUsers.length === 0 && userSearchTerm && (
+                      <div className="p-3 text-gray-500 text-center">
+                        該当するユーザーが見つかりません
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              <p className="text-sm text-gray-600 mt-1">
+                発送先部署の特定の担当者を指定する場合に選択してください
+              </p>
+            </div>
 
             <div className="form-group">
               <label className="form-label" htmlFor="notes">
