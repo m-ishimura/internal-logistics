@@ -30,18 +30,26 @@ export default function EditShipmentPage() {
   const [formData, setFormData] = useState({
     itemId: '',
     quantity: '',
-    destination: '',
+    senderId: '',
+    shipmentDepartmentId: '',
+    destinationDepartmentId: '',
+    trackingNumber: '',
     notes: '',
     shippedAt: ''
   })
 
   useEffect(() => {
     if (shipmentId && user) {
-      fetchShipment()
       fetchItems()
       fetchDepartments()
     }
   }, [shipmentId, user])
+
+  useEffect(() => {
+    if (shipmentId && departments.length > 0) {
+      fetchShipment()
+    }
+  }, [shipmentId, departments])
 
   const fetchShipment = async () => {
     try {
@@ -56,10 +64,16 @@ export default function EditShipmentPage() {
       const data = await response.json()
       const shipment = data.data
       setShipment(shipment)
+      
+      // 既存データの場合
+      
       setFormData({
         itemId: shipment.itemId,
         quantity: shipment.quantity.toString(),
-        destination: shipment.destination,
+        senderId: shipment.senderId.toString(),
+        shipmentDepartmentId: shipment.shipmentDepartmentId.toString(),
+        destinationDepartmentId: shipment.destinationDepartmentId.toString(),
+        trackingNumber: shipment.trackingNumber || '',
         notes: shipment.notes || '',
         shippedAt: shipment.shippedAt ? new Date(shipment.shippedAt).toISOString().slice(0, 10) : ''
       })
@@ -87,7 +101,7 @@ export default function EditShipmentPage() {
 
   const fetchDepartments = async () => {
     try {
-      const response = await fetch('/api/departments', {
+      const response = await fetch('/api/departments?limit=1000&forShipment=true', {
         credentials: 'include'
       })
       
@@ -109,8 +123,13 @@ export default function EditShipmentPage() {
       const submitData = {
         ...formData,
         quantity: parseInt(formData.quantity),
+        senderId: parseInt(formData.senderId),
+        shipmentDepartmentId: parseInt(formData.shipmentDepartmentId),
+        destinationDepartmentId: parseInt(formData.destinationDepartmentId),
+        createdBy: parseInt(userId),
+        updatedBy: parseInt(userId),
         ...(formData.shippedAt && { shippedAt: new Date(formData.shippedAt + 'T00:00:00.000Z').toISOString() })
-      }
+      })
 
       const response = await fetch(`/api/shipments/${shipmentId}`, {
         method: 'PUT',
@@ -184,7 +203,7 @@ export default function EditShipmentPage() {
                   <option value="">備品を選択してください</option>
                   {items.map((item) => (
                     <option key={item.id} value={item.id}>
-                      {item.name} ({item.category})
+                      {item.name}
                     </option>
                   ))}
                 </Select>
@@ -201,18 +220,44 @@ export default function EditShipmentPage() {
                   help="発送する数量を入力してください"
                 />
 
+                <Input
+                  id="trackingNumber"
+                  label="追跡番号（任意）"
+                  type="text"
+                  value={formData.trackingNumber}
+                  onChange={(e) => handleChange('trackingNumber', e.target.value)}
+                  placeholder="例: ABC123456789"
+                  help="追跡番号がある場合は入力してください"
+                />
+
                 <Select
-                  id="destination"
+                  id="shipmentDepartmentId"
+                  label="発送元部署"
+                  value={formData.shipmentDepartmentId}
+                  onChange={(e) => handleChange('shipmentDepartmentId', e.target.value)}
+                  required
+                  help="発送元の部署を選択してください"
+                >
+                  <option value="">部署を選択してください</option>
+                  {departments.map((dept) => (
+                    <option key={dept.id} value={dept.id}>
+                      {dept.name} {dept.code && `(${dept.code})`}
+                    </option>
+                  ))}
+                </Select>
+
+                <Select
+                  id="destinationDepartmentId"
                   label="宛先部署"
-                  value={formData.destination}
-                  onChange={(e) => handleChange('destination', e.target.value)}
+                  value={formData.destinationDepartmentId}
+                  onChange={(e) => handleChange('destinationDepartmentId', e.target.value)}
                   required
                   help="発送先の部署を選択してください"
                 >
                   <option value="">部署を選択してください</option>
                   {departments.map((dept) => (
-                    <option key={dept.id} value={dept.name}>
-                      {dept.name} ({dept.code})
+                    <option key={dept.id} value={dept.id}>
+                      {dept.name} {dept.code && `(${dept.code})`}
                     </option>
                   ))}
                 </Select>

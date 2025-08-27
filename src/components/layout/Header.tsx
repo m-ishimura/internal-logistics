@@ -9,6 +9,7 @@ import { Button } from '@/components/ui'
 export default function Header() {
   const { user, logout } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false)
 
   if (!user) return null
 
@@ -64,13 +65,44 @@ export default function Header() {
               <span className="absolute inset-x-0 -bottom-1 h-1 bg-blue-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
             </Link>
             {user.role === 'MANAGEMENT_USER' && (
-              <Link 
-                href="/reports" 
-                className="relative px-8 py-4 text-lg font-bold text-gray-700 hover:text-blue-600 transition-all duration-300 hover:bg-blue-50 rounded-lg group"
-              >
-                レポート
-                <span className="absolute inset-x-0 -bottom-1 h-1 bg-blue-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
-              </Link>
+              <div className="relative" onMouseLeave={() => setAdminMenuOpen(false)}>
+                <button
+                  onMouseEnter={() => setAdminMenuOpen(true)}
+                  className="relative px-8 py-4 text-lg font-bold text-gray-700 hover:text-blue-600 transition-all duration-300 hover:bg-blue-50 rounded-lg group flex items-center space-x-1"
+                >
+                  管理者メニュー
+                  <svg className="w-4 h-4 ml-1 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ transform: adminMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                  <span className="absolute inset-x-0 -bottom-1 h-1 bg-blue-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
+                </button>
+                
+                {adminMenuOpen && (
+                  <div className="absolute top-full left-0 mt-1 w-48 bg-white shadow-lg rounded-lg border border-gray-100 py-2 z-50">
+                    <Link 
+                      href="/departments"
+                      className="block px-4 py-3 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
+                      onClick={() => setAdminMenuOpen(false)}
+                    >
+                      部署管理
+                    </Link>
+                    <Link 
+                      href="/users"
+                      className="block px-4 py-3 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
+                      onClick={() => setAdminMenuOpen(false)}
+                    >
+                      ユーザー管理
+                    </Link>
+                    <Link 
+                      href="/reports"
+                      className="block px-4 py-3 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
+                      onClick={() => setAdminMenuOpen(false)}
+                    >
+                      レポート
+                    </Link>
+                  </div>
+                )}
+              </div>
             )}
           </nav>
 
@@ -156,13 +188,32 @@ export default function Header() {
               発送管理
             </Link>
             {user.role === 'MANAGEMENT_USER' && (
-              <Link 
-                href="/reports" 
-                className="block px-4 py-3 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                レポート
-              </Link>
+              <div>
+                <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  管理者メニュー
+                </div>
+                <Link 
+                  href="/departments"
+                  className="block px-6 py-3 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  部署管理
+                </Link>
+                <Link 
+                  href="/users"
+                  className="block px-6 py-3 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  ユーザー管理
+                </Link>
+                <Link 
+                  href="/reports" 
+                  className="block px-6 py-3 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  レポート
+                </Link>
+              </div>
             )}
           </nav>
         </div>

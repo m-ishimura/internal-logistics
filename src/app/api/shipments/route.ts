@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     // Department users can only see their own department's shipments
     if (userRole === 'DEPARTMENT_USER') {
-      where.departmentId = departmentId
+      where.shipmentDepartmentId = parseInt(departmentId!)
     }
 
     // 新しい検索条件
@@ -46,11 +46,11 @@ export async function GET(request: NextRequest) {
     }
 
     if (destination) {
-      where.destination = destination
+      where.destinationDepartmentId = parseInt(destination)
     }
 
     if (sourceDepartmentId && userRole === 'MANAGEMENT_USER') {
-      where.departmentId = sourceDepartmentId
+      where.shipmentDepartmentId = parseInt(sourceDepartmentId)
     }
 
     if (shippedFromDate || shippedToDate) {
@@ -81,8 +81,8 @@ export async function GET(request: NextRequest) {
     if (search) {
       const searchCondition = {
         OR: [
-          { destination: { contains: search, mode: 'insensitive' as const } },
           { trackingNumber: { contains: search, mode: 'insensitive' as const } },
+          { notes: { contains: search, mode: 'insensitive' as const } },
           { item: { name: { contains: search, mode: 'insensitive' as const } } }
         ]
       }
@@ -100,13 +100,23 @@ export async function GET(request: NextRequest) {
         where,
         skip,
         take: limit,
-        orderBy: { [sortBy]: sortOrder },
+        orderBy: [
+          { shippedAt: { sort: 'desc', nulls: 'last' } },
+          { createdAt: 'desc' }
+        ],
         include: {
           item: true,
           sender: {
             select: { id: true, name: true, email: true }
           },
-          department: true
+          shipmentDepartment: true,
+          destinationDepartment: true,
+          creator: {
+            select: { id: true, name: true, email: true }
+          },
+          updater: {
+            select: { id: true, name: true, email: true }
+          }
         }
       }),
       prisma.shipment.count({ where })
@@ -153,7 +163,7 @@ export async function POST(request: NextRequest) {
         where: { id: value.itemId }
       })
 
-      if (!item || item.departmentId !== departmentId) {
+      if (!item || item.departmentId !== parseInt(departmentId!)) {
         return NextResponse.json(
           { success: false, error: 'Item not found or access denied' },
           { status: 403 }
@@ -164,15 +174,23 @@ export async function POST(request: NextRequest) {
     const shipment = await prisma.shipment.create({
       data: {
         ...value,
-        senderId: userId,
-        departmentId: departmentId
+        senderId: parseInt(userId!),
+        createdBy: parseInt(userId!),
+        updatedBy: parseInt(userId!)
       },
       include: {
         item: true,
         sender: {
           select: { id: true, name: true, email: true }
         },
-        department: true
+        shipmentDepartment: true,
+        destinationDepartment: true,
+        creator: {
+          select: { id: true, name: true, email: true }
+        },
+        updater: {
+          select: { id: true, name: true, email: true }
+        }
       }
     })
 

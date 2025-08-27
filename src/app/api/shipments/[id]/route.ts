@@ -4,13 +4,14 @@ import { shipmentSchema } from '@/lib/validation'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = request.headers.get('x-user-id')
     const userRole = request.headers.get('x-user-role')
     const departmentId = request.headers.get('x-department-id')
-    const shipmentId = params.id
+    const resolvedParams = await params
+    const shipmentId = resolvedParams.id
 
     if (!shipmentId) {
       return NextResponse.json(
@@ -23,7 +24,7 @@ export async function GET(
 
     // Department users can only access their own department's shipments
     if (userRole === 'DEPARTMENT_USER') {
-      where.departmentId = departmentId
+      where.shipmentDepartmentId = parseInt(departmentId!)
     }
 
     const shipment = await prisma.shipment.findFirst({
@@ -33,7 +34,14 @@ export async function GET(
         sender: {
           select: { id: true, name: true, email: true }
         },
-        department: true
+        shipmentDepartment: true,
+        destinationDepartment: true,
+        creator: {
+          select: { id: true, name: true, email: true }
+        },
+        updater: {
+          select: { id: true, name: true, email: true }
+        }
       }
     })
 
@@ -59,13 +67,14 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = request.headers.get('x-user-id')!
     const userRole = request.headers.get('x-user-role')
     const departmentId = request.headers.get('x-department-id')!
-    const shipmentId = params.id
+    const resolvedParams = await params
+    const shipmentId = resolvedParams.id
 
     if (!shipmentId) {
       return NextResponse.json(
@@ -87,7 +96,7 @@ export async function PUT(
     // Check if shipment exists and user has access
     let where: any = { id: shipmentId }
     if (userRole === 'DEPARTMENT_USER') {
-      where.departmentId = departmentId
+      where.shipmentDepartmentId = parseInt(departmentId!)
     }
 
     const existingShipment = await prisma.shipment.findFirst({
@@ -108,7 +117,7 @@ export async function PUT(
         where: { id: value.itemId }
       })
 
-      if (!item || item.departmentId !== departmentId) {
+      if (!item || item.departmentId !== parseInt(departmentId!)) {
         return NextResponse.json(
           { success: false, error: 'Item not found or access denied' },
           { status: 403 }
@@ -118,13 +127,23 @@ export async function PUT(
 
     const updatedShipment = await prisma.shipment.update({
       where: { id: shipmentId },
-      data: value,
+      data: {
+        ...value,
+        updatedBy: parseInt(userId!)
+      },
       include: {
         item: true,
         sender: {
           select: { id: true, name: true, email: true }
         },
-        department: true
+        shipmentDepartment: true,
+        destinationDepartment: true,
+        creator: {
+          select: { id: true, name: true, email: true }
+        },
+        updater: {
+          select: { id: true, name: true, email: true }
+        }
       }
     })
 
@@ -143,13 +162,14 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = request.headers.get('x-user-id')
     const userRole = request.headers.get('x-user-role')
     const departmentId = request.headers.get('x-department-id')
-    const shipmentId = params.id
+    const resolvedParams = await params
+    const shipmentId = resolvedParams.id
 
     if (!shipmentId) {
       return NextResponse.json(
@@ -161,7 +181,7 @@ export async function DELETE(
     // Check if shipment exists and user has access
     let where: any = { id: shipmentId }
     if (userRole === 'DEPARTMENT_USER') {
-      where.departmentId = departmentId
+      where.shipmentDepartmentId = parseInt(departmentId!)
     }
 
     const existingShipment = await prisma.shipment.findFirst({

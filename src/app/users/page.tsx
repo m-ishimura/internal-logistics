@@ -12,6 +12,12 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 50,
+    total: 0,
+    totalPages: 0
+  })
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -35,23 +41,28 @@ export default function UsersPage() {
   }
 
   useEffect(() => {
-    fetchUsers()
+    fetchUsers(1)
     fetchDepartments()
   }, [])
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (pageNum: number = pagination.page) => {
     try {
-      const response = await fetch('/api/users', {
+      setLoading(true)
+      const response = await fetch(`/api/users?page=${pageNum}&limit=50&sortBy=id&sortOrder=asc`, {
         credentials: 'include'
       })
       if (response.ok) {
         const data = await response.json()
         setUsers(data.data || [])
+        setPagination(data.pagination)
       }
     } catch (error) {
       console.error('ユーザー一覧の取得に失敗:', error)
+    } finally {
+      setLoading(false)
     }
   }
+
 
   const fetchDepartments = async () => {
     try {
@@ -69,8 +80,8 @@ export default function UsersPage() {
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
     try {
       const url = editingUser 
         ? `/api/users/${editingUser.id}` 
@@ -79,6 +90,7 @@ export default function UsersPage() {
       
       const requestData = {
         ...formData,
+        departmentId: parseInt(formData.departmentId),
         ...(formData.authType === 'ENTRA_ID' ? { entraId: formData.entraId } : {}),
         ...(formData.authType === 'PASSWORD' && formData.password ? { password: formData.password } : {}),
       }
@@ -93,7 +105,7 @@ export default function UsersPage() {
       })
 
       if (response.ok) {
-        await fetchUsers()
+        await fetchUsers(pagination.page)
         resetForm()
         setShowAddModal(false)
         setEditingUser(null)
@@ -107,7 +119,11 @@ export default function UsersPage() {
     }
   }
 
-  const handleDelete = async (id: string) => {
+  const handlePageChange = (newPage: number) => {
+    fetchUsers(newPage)
+  }
+
+  const handleDelete = async (id: number) => {
     if (!confirm('このユーザーを削除しますか？')) return
 
     try {
@@ -117,7 +133,7 @@ export default function UsersPage() {
       })
 
       if (response.ok) {
-        await fetchUsers()
+        await fetchUsers(pagination.page)
       } else {
         alert('削除に失敗しました')
       }
@@ -144,7 +160,7 @@ export default function UsersPage() {
     setFormData({
       name: user.name,
       email: user.email,
-      departmentId: user.departmentId,
+      departmentId: user.departmentId ? user.departmentId.toString() : '',
       role: user.role,
       authType: user.authType,
       password: '',
@@ -246,6 +262,37 @@ export default function UsersPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+          
+          {/* ページネーション */}
+          {pagination.totalPages > 1 && (
+            <div className="flex justify-between items-center mt-6 px-4">
+              <div className="text-sm text-gray-600">
+                {pagination.total}件中 {((pagination.page - 1) * pagination.limit) + 1}-
+                {Math.min(pagination.page * pagination.limit, pagination.total)}件を表示
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => handlePageChange(pagination.page - 1)}
+                  disabled={pagination.page <= 1}
+                >
+                  前へ
+                </Button>
+                <span className="px-3 py-2 text-sm">
+                  {pagination.page} / {pagination.totalPages}
+                </span>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => handlePageChange(pagination.page + 1)}
+                  disabled={pagination.page >= pagination.totalPages}
+                >
+                  次へ
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
@@ -462,21 +509,6 @@ export default function UsersPage() {
                     </div>
                   )}
 
-                  {formData.authType === 'ENTRA_ID' && (
-                    <div className="form-group">
-                      <label className="form-label">
-                        Entra ID <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.entraId}
-                        onChange={(e) => setFormData({...formData, entraId: e.target.value})}
-                        className="form-input"
-                        placeholder="例: tanaka@company.onmicrosoft.com"
-                      />
-                    </div>
-                  )}
                 </div>
 
               </form>
@@ -495,7 +527,8 @@ export default function UsersPage() {
                     キャンセル
                   </button>
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={handleSubmit}
                     className="btn btn-primary min-w-[140px]"
                   >
                     {editingUser ? (

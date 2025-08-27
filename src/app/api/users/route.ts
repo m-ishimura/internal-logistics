@@ -46,8 +46,10 @@ export async function GET(request: NextRequest) {
           id: true,
           email: true,
           name: true,
+          departmentId: true,
           role: true,
           authType: true,
+          entraId: true,
           createdAt: true,
           updatedAt: true,
           department: {
@@ -108,8 +110,10 @@ export async function POST(request: NextRequest) {
         id: true,
         email: true,
         name: true,
+        departmentId: true,
         role: true,
         authType: true,
+        entraId: true,
         createdAt: true,
         updatedAt: true,
         department: {

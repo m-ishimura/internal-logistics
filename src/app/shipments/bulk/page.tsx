@@ -128,9 +128,9 @@ export default function BulkShipmentPage() {
   }
 
   const downloadTemplate = () => {
-    const csvContent = 'item_name,category,quantity,unit,destination,tracking_number,notes,shipped_at\n' +
-                      'オフィス用品セット,文房具,2,セット,東京オフィス,123-456-789,急送,2024-01-15 14:30\n' +
-                      'A4用紙,文房具,10,束,大阪支社,,通常配送,'
+    const csvContent = 'item_name,quantity,unit,destination,tracking_number,notes,shipped_at\n' +
+                      'オフィス用品セット,2,セット,東京オフィス,123-456-789,急送,2024-01-15 14:30\n' +
+                      'A4用紙,10,束,大阪支社,,通常配送,'
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')

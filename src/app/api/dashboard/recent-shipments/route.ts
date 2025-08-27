@@ -25,32 +25,49 @@ export async function GET(request: NextRequest) {
     // 終了日は23:59:59まで含める
     dateEnd.setHours(23, 59, 59, 999)
 
-    // WHERE条件の構築
+    // WHERE条件の構築（発送済みと未発送の両方を含める）
     let where: any = {
-      shippedAt: {
-        gte: dateStart,
-        lte: dateEnd
-      }
+      OR: [
+        // 発送済みの場合は発送日で検索
+        {
+          shippedAt: {
+            gte: dateStart,
+            lte: dateEnd
+          }
+        },
+        // 未発送の場合は登録日で検索
+        {
+          shippedAt: null,
+          createdAt: {
+            gte: dateStart,
+            lte: dateEnd
+          }
+        }
+      ]
     }
 
-    // 部署フィルター（発送先でフィルター）
+    // 部署フィルター
     if (userRole === 'DEPARTMENT_USER') {
-      // 部署ユーザーは自部署が発送先のもののみ
-      where.destination = departmentId
+      // 部署ユーザーは自部署の発送のみ表示
+      where = {
+        AND: [
+          { OR: where.OR },
+          { shipmentDepartmentId: parseInt(departmentId!) }
+        ]
+      }
     } else if (filterDepartmentId && filterDepartmentId !== 'all') {
-      // 管理者で特定部署が選択された場合、発送先でフィルター
-      const selectedDept = await prisma.department.findUnique({
-        where: { id: filterDepartmentId },
-        select: { name: true }
-      })
-      if (selectedDept) {
-        where.destination = selectedDept.name
+      // 管理者で特定部署が選択された場合
+      where = {
+        AND: [
+          { OR: where.OR },
+          { shipmentDepartmentId: parseInt(filterDepartmentId) }
+        ]
       }
     }
 
     const shipments = await prisma.shipment.findMany({
       where,
-      take: 10, // 最新10件
+      // フィルター条件に一致するすべてのデータを取得
       orderBy: [
         { shippedAt: 'desc' },
         { createdAt: 'desc' }
@@ -58,7 +75,7 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         quantity: true,
-        destination: true,
+        destinationDepartmentId: true,
         notes: true,
         shippedAt: true,
         createdAt: true,
@@ -67,7 +84,6 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             name: true,
-            category: true,
             unit: true
           }
         },
@@ -78,7 +94,14 @@ export async function GET(request: NextRequest) {
             email: true
           }
         },
-        department: {
+        shipmentDepartment: {
+          select: {
+            id: true,
+            name: true,
+            code: true
+          }
+        },
+        destinationDepartment: {
           select: {
             id: true,
             name: true,

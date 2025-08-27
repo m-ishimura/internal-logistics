@@ -27,17 +27,16 @@ export async function GET(request: NextRequest) {
 
     // For shipment creation, all users (including management) can only see their own department's items
     if (forShipment && departmentId) {
-      where.departmentId = departmentId
+      where.departmentId = parseInt(departmentId)
     }
     // For item management, department users can only see their own department's items
     else if (userRole === 'DEPARTMENT_USER' && departmentId) {
-      where.departmentId = departmentId
+      where.departmentId = parseInt(departmentId)
     }
 
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: 'insensitive' as const } },
-        { category: { contains: search, mode: 'insensitive' as const } }
+        { name: { contains: search, mode: 'insensitive' as const } }
       ]
     }
 

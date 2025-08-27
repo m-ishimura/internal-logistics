@@ -3,12 +3,12 @@ export type AuthType = 'ENTRA_ID' | 'PASSWORD'
 export type BulkImportStatus = 'PROCESSING' | 'COMPLETED' | 'FAILED'
 
 export interface User {
-  id: string
-  entraId?: string
+  id: number
+  entraId?: string | null
   email: string
   name: string
-  passwordHash?: string
-  departmentId: string
+  passwordHash?: string | null
+  departmentId: number
   role: UserRole
   authType: AuthType
   createdAt: Date
@@ -17,9 +17,9 @@ export interface User {
 }
 
 export interface Department {
-  id: string
+  id: number
   name: string
-  code: string
+  code?: string | null
   isManagement: boolean
   createdAt: Date
   updatedAt: Date
@@ -28,29 +28,36 @@ export interface Department {
 export interface Item {
   id: string
   name: string
-  category: string
-  unit: string
-  departmentId: string
+  unit?: string | null
+  departmentId: number
   createdAt: Date
   updatedAt: Date
   department?: Department
+  _count?: {
+    shipments: number
+  }
 }
 
 export interface Shipment {
   id: string
   itemId: string
   quantity: number
-  senderId: string
-  departmentId: string
-  destination: string
-  trackingNumber?: string
-  notes?: string
-  shippedAt?: Date
+  senderId: number
+  shipmentDepartmentId: number
+  destinationDepartmentId: number
+  trackingNumber?: string | null
+  notes?: string | null
+  shippedAt?: Date | null
+  createdBy: number
+  updatedBy: number
   createdAt: Date
   updatedAt: Date
   item?: Item
   sender?: User
-  department?: Department
+  shipmentDepartment?: Department
+  destinationDepartment?: Department
+  creator?: User
+  updater?: User
 }
 
 export interface BulkImport {
@@ -59,7 +66,7 @@ export interface BulkImport {
   totalRecords: number
   successRecords: number
   errorRecords: number
-  uploadedBy: string
+  uploadedBy: number
   status: BulkImportStatus
   createdAt: Date
   updatedAt: Date

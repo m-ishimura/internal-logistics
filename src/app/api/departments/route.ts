@@ -5,16 +5,18 @@ import { departmentSchema, paginationSchema } from '@/lib/validation'
 export async function GET(request: NextRequest) {
   try {
     const userRole = request.headers.get('x-user-role')
+    const url = new URL(request.url)
+    const queryParams = Object.fromEntries(url.searchParams.entries())
+    const forShipment = queryParams.forShipment === 'true' // 発送用フラグ
     
-    if (userRole !== 'MANAGEMENT_USER') {
+    // 発送用の場合は全ユーザーがアクセス可能、それ以外は管理者のみ
+    if (!forShipment && userRole !== 'MANAGEMENT_USER') {
       return NextResponse.json(
         { success: false, error: 'Access denied' },
         { status: 403 }
       )
     }
 
-    const url = new URL(request.url)
-    const queryParams = Object.fromEntries(url.searchParams.entries())
     const { error, value } = paginationSchema.validate(queryParams)
     
     if (error) {
@@ -24,8 +26,13 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const { page, limit, search, sortBy = 'createdAt', sortOrder } = value
-    const skip = (page - 1) * limit
+    const { page, limit, search, sortBy = 'id', sortOrder } = value
+    
+    // 部署一覧は全データを表示（ページネーションなし）
+    const finalSortBy = sortBy || 'id'
+    const finalSortOrder = sortOrder || 'asc'
+    const skip = forShipment ? 0 : (page - 1) * limit
+    const take = forShipment ? undefined : limit
 
     const where = search 
       ? {
@@ -36,20 +43,31 @@ export async function GET(request: NextRequest) {
         }
       : {}
 
+    // 発送用の場合は統計情報は不要なので軽量化
+    const includeStats = !forShipment
+
     const [departments, total] = await Promise.all([
       prisma.department.findMany({
         where,
-        skip,
-        take: limit,
-        orderBy: { [sortBy]: sortOrder },
-        include: {
-          _count: {
-            select: { users: true, items: true, shipments: true }
+        ...(take && { skip, take }),
+        orderBy: { [finalSortBy]: finalSortOrder },
+        ...(includeStats && {
+          include: {
+            _count: {
+              select: { 
+                users: true, 
+                items: true, 
+                shipmentDepartments: true,
+                destinationShipments: true
+              }
+            }
           }
-        }
+        })
       }),
       prisma.department.count({ where })
     ])
+
+    console.log('Departments from DB:', departments.map(d => ({ id: d.id, name: d.name })))
 
     return NextResponse.json({
       success: true,
@@ -72,9 +90,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('POST /api/departments - Headers:', Object.fromEntries(request.headers.entries()))
     const userRole = request.headers.get('x-user-role')
+    console.log('User role:', userRole)
     
     if (userRole !== 'MANAGEMENT_USER') {
+      console.log('Access denied - user role is not MANAGEMENT_USER')
       return NextResponse.json(
         { success: false, error: 'Access denied' },
         { status: 403 }
@@ -82,9 +103,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
+    console.log('Request body:', body)
     const { error, value } = departmentSchema.validate(body)
+    console.log('Validation result:', { error: error?.details, value })
     
     if (error) {
+      console.log('Validation failed:', error.details)
       return NextResponse.json(
         { success: false, error: 'Invalid input', details: error.details },
         { status: 400 }

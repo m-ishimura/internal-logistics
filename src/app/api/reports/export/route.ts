@@ -46,11 +46,10 @@ export async function GET(request: NextRequest) {
           }
         })
 
-        csvData = 'ID,備品名,カテゴリ,数量,単位,宛先,追跡番号,発送者,部署,登録日,発送日,備考\n'
+        csvData = 'ID,備品名,数量,単位,宛先,追跡番号,発送者,部署,登録日,発送日,備考\n'
         csvData += shipments.map(s => [
           s.id,
           s.item?.name || '',
-          s.item?.category || '',
           s.quantity,
           s.item?.unit || '',
           s.destination,
@@ -77,11 +76,10 @@ export async function GET(request: NextRequest) {
           }
         })
 
-        csvData = 'ID,備品名,カテゴリ,単位,部署,登録日,発送回数\n'
+        csvData = 'ID,備品名,単位,部署,登録日,発送回数\n'
         csvData += items.map(i => [
           i.id,
           i.name,
-          i.category,
           i.unit,
           i.department?.name || '',
           i.createdAt.toLocaleDateString('ja-JP'),

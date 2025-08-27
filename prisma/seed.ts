@@ -93,7 +93,6 @@ async function main() {
   const officeSupplies = await prisma.item.create({
     data: {
       name: 'オフィス用品セット',
-      category: '文房具',
       unit: 'セット',
       departmentId: itDept.id
     }
@@ -102,7 +101,6 @@ async function main() {
   const printer = await prisma.item.create({
     data: {
       name: 'プリンター',
-      category: 'IT機器',
       unit: '台',
       departmentId: itDept.id
     }
@@ -111,7 +109,6 @@ async function main() {
   const businessCards = await prisma.item.create({
     data: {
       name: '名刺',
-      category: '印刷物',
       unit: '箱',
       departmentId: salesDept.id
     }

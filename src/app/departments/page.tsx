@@ -35,11 +35,12 @@ export default function DepartmentsPage() {
 
   const fetchDepartments = async () => {
     try {
-      const response = await fetch('/api/departments', {
+      const response = await fetch('/api/departments?sortBy=id&sortOrder=asc&limit=1000', {
         credentials: 'include'
       })
       if (response.ok) {
         const data = await response.json()
+        console.log('Fetched departments:', data.data)
         setDepartments(data.data || [])
       }
     } catch (error) {
@@ -49,21 +50,30 @@ export default function DepartmentsPage() {
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
     try {
       const url = editingDepartment 
         ? `/api/departments/${editingDepartment.id}` 
         : '/api/departments'
       const method = editingDepartment ? 'PUT' : 'POST'
       
+      const submitData = {
+        ...formData,
+        code: formData.code || null
+      }
+
+      console.log('Submitting data:', submitData)
+      console.log('URL:', url, 'Method:', method)
+      console.log('Editing department:', editingDepartment)
+
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json'
         },
         credentials: 'include',
-        body: JSON.stringify(formData)
+        body: JSON.stringify(submitData)
       })
 
       if (response.ok) {
@@ -72,7 +82,23 @@ export default function DepartmentsPage() {
         setShowAddModal(false)
         setEditingDepartment(null)
       } else {
-        alert('保存に失敗しました')
+        console.error('Response status:', response.status, response.statusText)
+        const responseText = await response.text()
+        console.error('Response text:', responseText)
+        
+        if (responseText) {
+          try {
+            const error = JSON.parse(responseText)
+            console.error('API Error:', error)
+            alert(`保存に失敗しました: ${error.error || error.message || 'Unknown error'}`)
+          } catch (parseError) {
+            console.error('Failed to parse error response:', parseError)
+            alert(`保存に失敗しました: HTTP ${response.status} - ${responseText}`)
+          }
+        } else {
+          console.error('Empty response body')
+          alert(`保存に失敗しました: HTTP ${response.status} - Empty response`)
+        }
       }
     } catch (error) {
       console.error('保存エラー:', error)
@@ -80,7 +106,7 @@ export default function DepartmentsPage() {
     }
   }
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: number) => {
     if (!confirm('この部署を削除しますか？')) return
 
     try {
@@ -109,10 +135,11 @@ export default function DepartmentsPage() {
   }
 
   const openEditModal = (department: Department) => {
+    console.log('Opening edit modal for department:', department)
     setEditingDepartment(department)
     setFormData({
       name: department.name,
-      code: department.code,
+      code: department.code || '',
       isManagement: department.isManagement
     })
     setShowAddModal(true)
@@ -182,7 +209,10 @@ export default function DepartmentsPage() {
                       <td className="py-3 px-4">
                         <div className="flex space-x-2">
                           <button
-                            onClick={() => openEditModal(dept)}
+                            onClick={() => {
+                              console.log('Edit button clicked for dept:', dept)
+                              openEditModal(dept)
+                            }}
                             className="text-blue-600 hover:text-blue-800 text-sm"
                           >
                             編集
@@ -319,7 +349,8 @@ export default function DepartmentsPage() {
                     キャンセル
                   </button>
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={handleSubmit}
                     className="btn btn-primary min-w-[120px]"
                   >
                     {editingDepartment ? (

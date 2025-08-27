@@ -11,7 +11,7 @@ export interface JWTPayload {
   userId: string
   email: string
   role: string
-  departmentId: string
+  departmentId: number
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -218,7 +218,7 @@ export async function createUser(
   email: string,
   name: string,
   password: string,
-  departmentId: string,
+  departmentId: number,
   role: 'DEPARTMENT_USER' | 'MANAGEMENT_USER'
 ): Promise<User> {
   const passwordHash = await hashPassword(password)

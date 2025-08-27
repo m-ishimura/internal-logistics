@@ -23,7 +23,6 @@ export default function NewItemPage() {
   const [departments, setDepartments] = useState<Department[]>([])
   const [formData, setFormData] = useState({
     name: '',
-    category: '',
     unit: '',
     departmentId: ''
   })
@@ -120,15 +119,6 @@ export default function NewItemPage() {
               help="分かりやすい備品名を入力してください"
             />
 
-            <Input
-              id="category"
-              label="カテゴリ"
-              value={formData.category}
-              onChange={(e) => handleChange('category', e.target.value)}
-              required
-              placeholder="例: 文房具, IT機器, オフィス用品"
-              help="備品のカテゴリを入力してください"
-            />
 
             <Input
               id="unit"

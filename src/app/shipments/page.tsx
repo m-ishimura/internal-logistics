@@ -19,6 +19,7 @@ export default function ShipmentsPage() {
   const { user } = useAuth()
   const [shipments, setShipments] = useState<Shipment[]>([])
   const [loading, setLoading] = useState(true)
+  const [deleteLoading, setDeleteLoading] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [items, setItems] = useState<Item[]>([])
   const [departments, setDepartments] = useState<Department[]>([])
@@ -107,7 +108,7 @@ export default function ShipmentsPage() {
       })
       if (response.ok) {
         const data = await response.json()
-        const uniqueDestinations = [...new Set(data.data.map((s: Shipment) => s.destination))]
+        const uniqueDestinations = [...new Set(data.data.map((s: Shipment) => s.destinationDepartment?.name))]
         setDestinations(uniqueDestinations.filter(Boolean))
       }
     } catch (err) {
@@ -151,6 +152,37 @@ export default function ShipmentsPage() {
   }
 
   const hasActiveFilters = Object.values(filters).some(value => value !== '')
+
+  const getDepartmentNameById = (departmentId: string | number) => {
+    const dept = departments.find(d => d.id.toString() === departmentId.toString())
+    return dept?.name || `部署ID: ${departmentId}`
+  }
+
+  const handleDelete = async (shipmentId: string, itemName: string) => {
+    if (!confirm(`「${itemName}」の発送を削除しますか？この操作は元に戻せません。`)) {
+      return
+    }
+
+    try {
+      setDeleteLoading(shipmentId)
+      const response = await fetch(`/api/shipments/${shipmentId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || '発送の削除に失敗しました')
+      }
+
+      // 一覧を再読み込み
+      fetchShipments(filters, pagination.page)
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setDeleteLoading(null)
+    }
+  }
 
 
   if (!user) return null
@@ -234,7 +266,7 @@ export default function ShipmentsPage() {
                       <option value="">すべて</option>
                       {items.map((item) => (
                         <option key={item.id} value={item.id}>
-                          {item.name} ({item.category})
+                          {item.name}
                         </option>
                       ))}
                     </Select>
@@ -328,7 +360,8 @@ export default function ShipmentsPage() {
             <>
               <div className="space-y-2">
                 {/* ヘッダー */}
-                <div className={`grid grid-cols-1 sm:grid-cols-3 ${user.role === 'MANAGEMENT_USER' ? 'lg:grid-cols-6' : 'lg:grid-cols-5'} gap-2 px-3 py-2 border-b border-gray-200`}>
+                <div className={`grid grid-cols-1 sm:grid-cols-4 ${user.role === 'MANAGEMENT_USER' ? 'lg:grid-cols-7' : 'lg:grid-cols-6'} gap-2 px-3 py-2 border-b border-gray-200`}>
+                  <div className="text-sm font-medium text-gray-700">発送日</div>
                   <div className="text-sm font-medium text-gray-700">備品名</div>
                   <div className="text-sm font-medium text-gray-700">数量</div>
                   <div className="text-sm font-medium text-gray-700">発送先</div>
@@ -340,7 +373,13 @@ export default function ShipmentsPage() {
                 {/* データ行 */}
                 {shipments.map((shipment) => (
                   <div key={shipment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <div className={`flex-1 grid grid-cols-1 sm:grid-cols-3 ${user.role === 'MANAGEMENT_USER' ? 'lg:grid-cols-6' : 'lg:grid-cols-5'} gap-2 items-center`}>
+                    <div className={`flex-1 grid grid-cols-1 sm:grid-cols-4 ${user.role === 'MANAGEMENT_USER' ? 'lg:grid-cols-7' : 'lg:grid-cols-6'} gap-2 items-center`}>
+                      <div className="text-sm text-gray-700">
+                        {shipment.shippedAt 
+                          ? new Date(shipment.shippedAt).toLocaleDateString('ja-JP')
+                          : <span className="text-gray-400">未発送</span>
+                        }
+                      </div>
                       <div className="font-medium text-gray-900 truncate">
                         {shipment.item?.name || '-'}
                       </div>
@@ -348,22 +387,66 @@ export default function ShipmentsPage() {
                         {shipment.quantity} {shipment.item?.unit || ''}
                       </div>
                       <div className="text-sm text-gray-700">
-                        {shipment.destination}
+                        {shipment.destinationDepartment?.name || '-'}
                       </div>
                       <div className="text-sm text-gray-600">
                         {shipment.sender?.name}
                       </div>
                       {user.role === 'MANAGEMENT_USER' && (
                         <div className="text-sm text-gray-600">
-                          {shipment.department?.name}
+                          {shipment.shipmentDepartment?.name}
                         </div>
                       )}
-                      <div className="text-sm">
-                        <Link href={`/shipments/${shipment.id}/edit`}>
-                          <Button variant="secondary" size="sm">
-                            編集
-                          </Button>
-                        </Link>
+                      <div className="flex gap-2">
+                        {(() => {
+                          const today = new Date()
+                          today.setHours(0, 0, 0, 0) // 今日の00:00:00に設定
+                          const shippedDate = shipment.shippedAt ? new Date(shipment.shippedAt) : null
+                          shippedDate?.setHours(0, 0, 0, 0) // 発送日の00:00:00に設定
+                          const isShippedPastOrToday = shippedDate && shippedDate <= today
+                          
+                          return (
+                            <>
+                              {isShippedPastOrToday ? (
+                                <Button 
+                                  variant="secondary" 
+                                  size="sm" 
+                                  disabled
+                                  title="発送済みまたは当日発送分は編集できません"
+                                >
+                                  編集
+                                </Button>
+                              ) : (
+                                <Link href={`/shipments/${shipment.id}/edit`}>
+                                  <Button variant="secondary" size="sm">
+                                    編集
+                                  </Button>
+                                </Link>
+                              )}
+                              
+                              {isShippedPastOrToday ? (
+                                <Button 
+                                  variant="danger" 
+                                  size="sm" 
+                                  disabled
+                                  title="発送済みまたは当日発送分は削除できません"
+                                >
+                                  削除
+                                </Button>
+                              ) : (
+                                <Button 
+                                  variant="danger" 
+                                  size="sm"
+                                  loading={deleteLoading === shipment.id}
+                                  disabled={deleteLoading === shipment.id}
+                                  onClick={() => handleDelete(shipment.id, shipment.item?.name || '')}
+                                >
+                                  削除
+                                </Button>
+                              )}
+                            </>
+                          )
+                        })()}
                       </div>
                     </div>
                   </div>

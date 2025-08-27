@@ -24,6 +24,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           className={inputClasses}
           {...props}
+          value={props.value ?? ''}
         />
         {error && (
           <div className="form-error" role="alert">
