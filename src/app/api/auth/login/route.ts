@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Joi from 'joi'
-import { loginUser, generateJWT, setAuthCookie } from '@/lib/auth'
+import { loginUser, generateJWT } from '@/lib/auth'
 
 const loginSchema = Joi.object({
   email: Joi.string().email().required(),

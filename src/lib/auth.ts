@@ -24,7 +24,7 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 
 export function generateJWT(user: User): string {
   const payload: JWTPayload = {
-    userId: user.id,
+    userId: String(user.id),
     email: user.email,
     role: user.role,
     departmentId: user.departmentId
@@ -97,7 +97,7 @@ export async function getCurrentUser(): Promise<User | null> {
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
+      where: { id: parseInt(payload.userId) },
       include: { department: true }
     })
 
@@ -133,7 +133,7 @@ export async function getCurrentUserFromRequest(request: Request): Promise<User 
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
+      where: { id: parseInt(payload.userId) },
       include: { department: true }
     })
 
@@ -200,7 +200,7 @@ export async function findUserByEmail(email: string): Promise<User | null> {
 export async function updateUserEntraId(userId: string, entraId: string): Promise<User | null> {
   try {
     const user = await prisma.user.update({
-      where: { id: userId },
+      where: { id: parseInt(userId) },
       data: { 
         entraId,
         authType: 'ENTRA_ID'
@@ -236,8 +236,8 @@ export async function createUser(
   })
 }
 
-export function setAuthCookie(token: string) {
-  const cookieStore = cookies()
+export async function setAuthCookie(token: string) {
+  const cookieStore = await cookies()
   cookieStore.set('auth-token', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -247,7 +247,7 @@ export function setAuthCookie(token: string) {
   })
 }
 
-export function clearAuthCookie() {
-  const cookieStore = cookies()
+export async function clearAuthCookie() {
+  const cookieStore = await cookies()
   cookieStore.delete('auth-token')
 }

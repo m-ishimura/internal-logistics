@@ -28,6 +28,13 @@ export default function UsersPage() {
     entraId: ''
   })
 
+  useEffect(() => {
+    if (user && user.role === 'MANAGEMENT_USER') {
+      fetchUsers(1)
+      fetchDepartments()
+    }
+  }, [user])
+
   if (!user || user.role !== 'MANAGEMENT_USER') {
     return (
       <div className="max-w-4xl mx-auto px-8 py-8">
@@ -39,11 +46,6 @@ export default function UsersPage() {
       </div>
     )
   }
-
-  useEffect(() => {
-    fetchUsers(1)
-    fetchDepartments()
-  }, [])
 
   const fetchUsers = async (pageNum: number = pagination.page) => {
     try {

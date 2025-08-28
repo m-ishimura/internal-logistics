@@ -67,7 +67,6 @@ export async function GET(request: NextRequest) {
       prisma.department.count({ where })
     ])
 
-    console.log('Departments from DB:', departments.map(d => ({ id: d.id, name: d.name })))
 
     return NextResponse.json({
       success: true,
@@ -90,12 +89,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('POST /api/departments - Headers:', Object.fromEntries(request.headers.entries()))
     const userRole = request.headers.get('x-user-role')
-    console.log('User role:', userRole)
     
     if (userRole !== 'MANAGEMENT_USER') {
-      console.log('Access denied - user role is not MANAGEMENT_USER')
       return NextResponse.json(
         { success: false, error: 'Access denied' },
         { status: 403 }
@@ -103,12 +99,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    console.log('Request body:', body)
     const { error, value } = departmentSchema.validate(body)
-    console.log('Validation result:', { error: error?.details, value })
     
     if (error) {
-      console.log('Validation failed:', error.details)
       return NextResponse.json(
         { success: false, error: 'Invalid input', details: error.details },
         { status: 400 }
@@ -126,7 +119,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Create department error:', error)
     
-    if (error.code === 'P2002') {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
       return NextResponse.json(
         { success: false, error: 'Department code already exists' },
         { status: 409 }

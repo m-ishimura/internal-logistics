@@ -109,7 +109,7 @@ export default function ShipmentsPage() {
       if (response.ok) {
         const data = await response.json()
         const uniqueDestinations = [...new Set(data.data.map((s: Shipment) => s.destinationDepartment?.name))]
-        setDestinations(uniqueDestinations.filter(Boolean))
+        setDestinations(uniqueDestinations.filter(Boolean) as string[])
       }
     } catch (err) {
       console.error('Failed to fetch destinations:', err)
@@ -430,7 +430,7 @@ export default function ShipmentsPage() {
                               
                               {isShippedPastOrToday ? (
                                 <Button 
-                                  variant="danger" 
+                                  variant="error" 
                                   size="sm" 
                                   disabled
                                   title="発送済みまたは当日発送分は削除できません"
@@ -439,7 +439,7 @@ export default function ShipmentsPage() {
                                 </Button>
                               ) : (
                                 <Button 
-                                  variant="danger" 
+                                  variant="error" 
                                   size="sm"
                                   loading={deleteLoading === shipment.id}
                                   disabled={deleteLoading === shipment.id}

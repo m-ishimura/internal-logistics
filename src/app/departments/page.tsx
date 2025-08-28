@@ -17,6 +17,12 @@ export default function DepartmentsPage() {
     isManagement: false
   })
 
+  useEffect(() => {
+    if (user && user.role === 'MANAGEMENT_USER') {
+      fetchDepartments()
+    }
+  }, [user])
+
   if (!user || user.role !== 'MANAGEMENT_USER') {
     return (
       <div className="max-w-4xl mx-auto px-8 py-8">
@@ -28,10 +34,6 @@ export default function DepartmentsPage() {
       </div>
     )
   }
-
-  useEffect(() => {
-    fetchDepartments()
-  }, [])
 
   const fetchDepartments = async () => {
     try {

@@ -4,7 +4,7 @@ import { shipmentSchema, paginationSchema } from '@/lib/validation'
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id')
+    // const userId = request.headers.get('x-user-id')
     const userRole = request.headers.get('x-user-role')
     const departmentId = request.headers.get('x-department-id')
 
@@ -27,13 +27,13 @@ export async function GET(request: NextRequest) {
       destination, 
       sourceDepartmentId, 
       shippedFromDate, 
-      shippedToDate, 
-      sortBy = 'createdAt', 
-      sortOrder 
+      shippedToDate 
+      // sortBy = 'createdAt', 
+      // sortOrder 
     } = value
     const skip = (page - 1) * limit
 
-    let where: any = {}
+    const where: Record<string, any> = {}
 
     // Department users can only see their own department's shipments
     if (userRole === 'DEPARTMENT_USER') {

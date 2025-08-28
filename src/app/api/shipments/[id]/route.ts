@@ -7,7 +7,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const userId = request.headers.get('x-user-id')
+    // const userId = request.headers.get('x-user-id')
     const userRole = request.headers.get('x-user-role')
     const departmentId = request.headers.get('x-department-id')
     const resolvedParams = await params
@@ -20,7 +20,7 @@ export async function GET(
       )
     }
 
-    let where: any = { id: shipmentId }
+    const where: Record<string, any> = { id: shipmentId }
 
     // Department users can only access their own department's shipments
     if (userRole === 'DEPARTMENT_USER') {
@@ -97,7 +97,7 @@ export async function PUT(
     }
 
     // Check if shipment exists and user has access
-    let where: any = { id: shipmentId }
+    const where: Record<string, any> = { id: shipmentId }
     if (userRole === 'DEPARTMENT_USER') {
       where.shipmentDepartmentId = parseInt(departmentId!)
     }
@@ -171,7 +171,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const userId = request.headers.get('x-user-id')
+    // const userId = request.headers.get('x-user-id')
     const userRole = request.headers.get('x-user-role')
     const departmentId = request.headers.get('x-department-id')
     const resolvedParams = await params
@@ -185,7 +185,7 @@ export async function DELETE(
     }
 
     // Check if shipment exists and user has access
-    let where: any = { id: shipmentId }
+    const where: Record<string, any> = { id: shipmentId }
     if (userRole === 'DEPARTMENT_USER') {
       where.shipmentDepartmentId = parseInt(departmentId!)
     }

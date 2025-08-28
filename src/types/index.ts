@@ -81,7 +81,7 @@ export interface BulkImportError {
   bulkImportId: string
   rowNumber: number
   errorMessage: string
-  rowData: any
+  rowData: Record<string, any>
   createdAt: Date
 }
 
@@ -94,7 +94,7 @@ export interface AuthContextType {
   refreshAuth: () => Promise<void>
 }
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = Record<string, any>> {
   success: boolean
   data?: T
   error?: string

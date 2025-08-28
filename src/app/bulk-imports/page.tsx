@@ -16,6 +16,12 @@ export default function BulkImportsPage() {
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
 
+  useEffect(() => {
+    if (user && user.role === 'MANAGEMENT_USER') {
+      fetchBulkImports()
+    }
+  }, [user])
+
   if (!user || user.role !== 'MANAGEMENT_USER') {
     return (
       <div className="max-w-4xl mx-auto px-8 py-8">
@@ -27,10 +33,6 @@ export default function BulkImportsPage() {
       </div>
     )
   }
-
-  useEffect(() => {
-    fetchBulkImports()
-  }, [])
 
   const fetchBulkImports = async () => {
     try {

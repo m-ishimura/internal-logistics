@@ -54,7 +54,7 @@ export default function ItemsPage() {
       setItems(data.data)
       setPagination(data.pagination)
     } catch (err: any) {
-      setError(err.message)
+      setError(err instanceof Error ? err.message : String(err))
     } finally {
       setLoading(false)
     }

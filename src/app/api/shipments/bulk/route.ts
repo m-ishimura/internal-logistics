@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
         totalRecords: data.length,
         successRecords: 0,
         errorRecords: 0,
-        uploadedBy: userId,
+        uploadedBy: parseInt(userId),
         status: 'PROCESSING'
       }
     })

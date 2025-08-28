@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { Card, CardHeader, CardTitle, CardContent, Button, Select, Input } from '@/components/ui'
+import { Card, CardHeader, CardTitle, CardContent, Select, Input } from '@/components/ui'
 import type { Department, Shipment } from '@/types'
 
 export default function DashboardPage() {
@@ -84,10 +84,10 @@ export default function DashboardPage() {
     return date.toLocaleDateString('ja-JP')
   }
 
-  const formatDateTime = (dateString: string | Date) => {
-    const date = new Date(dateString)
-    return date.toLocaleString('ja-JP')
-  }
+  // const formatDateTime = (dateString: string | Date) => {
+  //   const date = new Date(dateString)
+  //   return date.toLocaleString('ja-JP')
+  // }
 
   const getDepartmentNameById = (departmentId: string | number) => {
     const dept = departments.find(d => d.id.toString() === departmentId.toString())

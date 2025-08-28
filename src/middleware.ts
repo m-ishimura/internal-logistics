@@ -41,7 +41,7 @@ export async function middleware(request: NextRequest) {
         response.headers.set('x-user-id', payload.userId)
         response.headers.set('x-user-role', payload.role)
         if (payload.departmentId) {
-          response.headers.set('x-department-id', payload.departmentId)
+          response.headers.set('x-department-id', String(payload.departmentId))
         }
         
         console.log(`[Middleware] ${pathname} - Headers added successfully`)

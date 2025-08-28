@@ -4,7 +4,7 @@ import { itemSchema, paginationSchema } from '@/lib/validation'
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id')
+    // const userId = request.headers.get('x-user-id')
     const userRole = request.headers.get('x-user-role')
     const departmentId = request.headers.get('x-department-id')
 
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const { page, limit, search, sortBy = 'createdAt', sortOrder } = value
     const skip = (page - 1) * limit
 
-    let where: any = {}
+    const where: Record<string, any> = {}
 
     // For shipment creation, all users (including management) can only see their own department's items
     if (forShipment && departmentId) {

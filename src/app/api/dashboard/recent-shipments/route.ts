@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id')
+    // const userId = request.headers.get('x-user-id')
     const userRole = request.headers.get('x-user-role')
     const departmentId = request.headers.get('x-department-id')
 
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     dateEnd.setHours(23, 59, 59, 999)
 
     // WHERE条件の構築（発送済みと未発送の両方を含める）
-    let where: any = {
+    let where: Record<string, any> = {
       OR: [
         // 発送済みの場合は発送日で検索
         {
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 部署フィルター
-    const additionalFilters: any[] = []
+    const additionalFilters: Record<string, any>[] = []
     
     if (userRole === 'DEPARTMENT_USER') {
       // 部署ユーザーは自部署の発送のみ表示

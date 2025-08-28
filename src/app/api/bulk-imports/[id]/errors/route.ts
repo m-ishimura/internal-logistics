@@ -25,7 +25,7 @@ export async function GET(
     }
 
     // Check access rights
-    if (userRole !== 'MANAGEMENT_USER' && bulkImport.uploadedBy !== userId) {
+    if (userRole !== 'MANAGEMENT_USER' && bulkImport.uploadedBy !== parseInt(userId)) {
       return NextResponse.json(
         { success: false, error: 'Access denied' },
         { status: 403 }

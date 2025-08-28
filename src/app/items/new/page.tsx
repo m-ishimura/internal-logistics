@@ -30,7 +30,7 @@ export default function NewItemPage() {
   useEffect(() => {
     if (user) {
       if (user.role === 'DEPARTMENT_USER') {
-        setFormData(prev => ({ ...prev, departmentId: user.departmentId }))
+        setFormData(prev => ({ ...prev, departmentId: String(user.departmentId) }))
       } else {
         fetchDepartments()
       }
@@ -74,7 +74,7 @@ export default function NewItemPage() {
 
       router.push('/items')
     } catch (err: any) {
-      setError(err.message)
+      setError(err instanceof Error ? err.message : String(err))
     } finally {
       setLoading(false)
     }

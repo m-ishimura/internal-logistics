@@ -259,7 +259,7 @@ export default function EditItemPage({ params }: EditItemPageProps) {
                     </div>
                     <Button 
                       type="button" 
-                      variant="destructive"
+                      variant="error"
                       onClick={handleDelete}
                       disabled={loading}
                       className="bg-red-600 hover:bg-red-700 text-white"
