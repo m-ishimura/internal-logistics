@@ -12,7 +12,8 @@
       "Bash(npx kill-port:*)",
       "Read(/C:\\Users\\MasahiroIshimura\\Desktop/**)",
       "Read(/C:\\Users\\MasahiroIshimura\\Desktop/**)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": [],
