@@ -42,5 +42,11 @@ export const paginationSchema = Joi.object({
   search: Joi.string().max(100).optional(),
   sortBy: Joi.string().max(50).optional(),
   sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
-  forShipment: Joi.string().optional()
+  forShipment: Joi.string().optional(),
+  // フィルターパラメータを追加
+  itemId: Joi.string().optional(),
+  destination: Joi.string().optional(),
+  sourceDepartmentId: Joi.string().optional(),
+  shippedFromDate: Joi.string().optional(),
+  shippedToDate: Joi.string().optional()
 })

@@ -46,7 +46,9 @@ export async function GET(request: NextRequest) {
     }
 
     if (destination) {
-      where.destinationDepartmentId = parseInt(destination)
+      where.destinationDepartment = {
+        name: destination
+      }
     }
 
     if (sourceDepartmentId && userRole === 'MANAGEMENT_USER') {

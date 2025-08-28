@@ -103,13 +103,14 @@ export default function ShipmentsPage() {
 
   const fetchDestinations = async () => {
     try {
-      const response = await fetch('/api/shipments?limit=1000', {
+      // 部署一覧から発送先候補を取得
+      const response = await fetch('/api/departments', {
         credentials: 'include'
       })
       if (response.ok) {
         const data = await response.json()
-        const uniqueDestinations = [...new Set(data.data.map((s: Shipment) => s.destinationDepartment?.name))]
-        setDestinations(uniqueDestinations.filter(Boolean) as string[])
+        const departmentNames = data.data?.map((dept: Department) => dept.name) || []
+        setDestinations(departmentNames)
       }
     } catch (err) {
       console.error('Failed to fetch destinations:', err)
