@@ -76,7 +76,7 @@ export default function ItemsPage() {
   if (!user) return null
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-none px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-8" style={{ paddingLeft: '1rem', paddingRight: '1rem', paddingTop: '1rem', paddingBottom: '1rem' }}>
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">備品管理</h1>
@@ -107,12 +107,12 @@ export default function ItemsPage() {
             <div className="flex gap-4">
               <div className="flex-1">
                 <Input
-                  placeholder="備品名で検索..."
+                  placeholder="備品名・部署名で検索..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
-              <Button type="submit" variant="secondary">
+              <Button type="submit" variant="secondary" className="h-10">
                 検索
               </Button>
             </div>
