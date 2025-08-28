@@ -13,7 +13,9 @@
       "Read(/C:\\Users\\MasahiroIshimura\\Desktop/**)",
       "Read(/C:\\Users\\MasahiroIshimura\\Desktop/**)",
       "WebSearch",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": [],

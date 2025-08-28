@@ -26,24 +26,25 @@ interface UserInfo {
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
+    const { searchParams, origin } = new URL(request.url)
+    const baseUrl = process.env.NEXTAUTH_URL || origin
     const code = searchParams.get('code')
     const state = searchParams.get('state')
     const error = searchParams.get('error')
 
     if (error) {
       console.error('Entra ID auth error:', error)
-      return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/login?error=entra_id_error`)
+      return NextResponse.redirect(`${baseUrl}/login?error=entra_id_error`)
     }
 
     if (!code || !state) {
-      return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/login?error=invalid_callback`)
+      return NextResponse.redirect(`${baseUrl}/login?error=invalid_callback`)
     }
 
     // Validate state parameter
     const storedState = request.cookies.get('entra-auth-state')?.value
     if (!storedState || storedState !== state) {
-      return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/login?error=invalid_state`)
+      return NextResponse.redirect(`${baseUrl}/login?error=invalid_state`)
     }
 
     // Exchange authorization code for access token
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest) {
 
     if (!tokenResponse.ok) {
       console.error('Token exchange failed:', await tokenResponse.text())
-      return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/login?error=token_exchange_failed`)
+      return NextResponse.redirect(`${baseUrl}/login?error=token_exchange_failed`)
     }
 
     const tokenData: TokenResponse = await tokenResponse.json()
@@ -80,7 +81,7 @@ export async function GET(request: NextRequest) {
 
     if (!userResponse.ok) {
       console.error('User info fetch failed:', await userResponse.text())
-      return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/login?error=user_info_failed`)
+      return NextResponse.redirect(`${baseUrl}/login?error=user_info_failed`)
     }
 
     const userInfo: UserInfo = await userResponse.json()
@@ -98,7 +99,7 @@ export async function GET(request: NextRequest) {
 
     if (!user) {
       return NextResponse.redirect(
-        `${process.env.NEXTAUTH_URL}/login?error=user_not_found&email=${encodeURIComponent(userInfo.mail || userInfo.userPrincipalName)}`
+        `${baseUrl}/login?error=user_not_found&email=${encodeURIComponent(userInfo.mail || userInfo.userPrincipalName)}`
       )
     }
 
@@ -118,7 +119,7 @@ export async function GET(request: NextRequest) {
     const token = generateJWT(user)
 
     // Create response and set cookie
-    const response = NextResponse.redirect(`${process.env.NEXTAUTH_URL}/dashboard`)
+    const response = NextResponse.redirect(`${baseUrl}/dashboard`)
     
     response.cookies.set('auth-token', token, {
       httpOnly: true,
@@ -134,6 +135,8 @@ export async function GET(request: NextRequest) {
     return response
   } catch (error) {
     console.error('Entra ID callback error:', error)
-    return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/login?error=callback_error`)
+    const { origin } = new URL(request.url)
+    const baseUrl = process.env.NEXTAUTH_URL || origin
+    return NextResponse.redirect(`${baseUrl}/login?error=callback_error`)
   }
 }
