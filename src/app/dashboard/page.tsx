@@ -15,14 +15,16 @@ export default function DashboardPage() {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
 
-  // デフォルト日付設定（本日-7日〜本日）
+  // デフォルト日付設定（本日-7日〜本日+7日）
   useEffect(() => {
     const today = new Date()
     const weekAgo = new Date()
+    const weekAhead = new Date()
     weekAgo.setDate(today.getDate() - 7)
+    weekAhead.setDate(today.getDate() + 7)
     
-    setEndDate(today.toISOString().split('T')[0])
     setStartDate(weekAgo.toISOString().split('T')[0])
+    setEndDate(weekAhead.toISOString().split('T')[0])
   }, [])
 
   useEffect(() => {

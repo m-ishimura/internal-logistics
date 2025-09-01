@@ -15,7 +15,15 @@
       "WebSearch",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "mcp__serena__list_dir",
+      "mcp__serena__write_memory",
+      "mcp__serena__list_memories",
+      "mcp__serena__get_symbols_overview",
+      "mcp__serena__search_for_pattern",
+      "mcp__serena__find_symbol",
+      "Read(C:\\Users\\MasahiroIshimura\\Desktop/**)",
+      "mcp__serena__think_about_collected_information"
     ],
     "deny": [],
     "ask": [],

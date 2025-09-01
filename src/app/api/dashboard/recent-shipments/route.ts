@@ -3,9 +3,11 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
   try {
-    // const userId = request.headers.get('x-user-id')
+    const userId = request.headers.get('x-user-id')
     const userRole = request.headers.get('x-user-role')
     const departmentId = request.headers.get('x-department-id')
+    
+    console.log('[Recent Shipments] Request headers:', { userId, userRole, departmentId })
 
     const url = new URL(request.url)
     const searchParams = url.searchParams
@@ -16,10 +18,11 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get('startDate')
     const endDate = searchParams.get('endDate')
     
-    // デフォルトの日付範囲（本日-7日〜本日）
-    const defaultEndDate = new Date()
+    // デフォルトの日付範囲（本日-7日〜本日+7日）
     const defaultStartDate = new Date()
+    const defaultEndDate = new Date()
     defaultStartDate.setDate(defaultStartDate.getDate() - 7)
+    defaultEndDate.setDate(defaultEndDate.getDate() + 7)
     
     const dateStart = startDate ? new Date(startDate) : defaultStartDate
     const dateEnd = endDate ? new Date(endDate) : defaultEndDate

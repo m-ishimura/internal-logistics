@@ -253,99 +253,135 @@ export default function ShipmentsPage() {
             </div>
 
             {showFilters && (
-              <form onSubmit={handleSearch} className="p-4 bg-gray-50 rounded-lg border">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                  {/* 備品選択 */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      備品
-                    </label>
-                    <Select
-                      value={filters.itemId}
-                      onChange={(e) => handleFilterChange('itemId', e.target.value)}
-                    >
-                      <option value="">すべて</option>
-                      {items.map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.name}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-
-                  {/* 発送先選択 */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      発送先
-                    </label>
-                    <Select
-                      value={filters.destination}
-                      onChange={(e) => handleFilterChange('destination', e.target.value)}
-                    >
-                      <option value="">すべて</option>
-                      {destinations.map((destination) => (
-                        <option key={destination} value={destination}>
-                          {destination}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-
-                  {/* 発送部署選択（管理者のみ） */}
-                  {user?.role === 'MANAGEMENT_USER' && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        発送部署
+              <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl border border-gray-200 shadow-sm mb-6">
+                <form onSubmit={handleSearch} className="p-6 pb-3">
+                  <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${user?.role === 'MANAGEMENT_USER' ? 'xl:grid-cols-5' : 'xl:grid-cols-4'} gap-4 mb-6`}>
+                    {/* 備品選択 */}
+                    <div className="space-y-2">
+                      <label className="flex items-center text-sm font-semibold text-gray-700">
+                        <svg className="w-4 h-4 mr-1.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                        備品
                       </label>
                       <Select
-                        value={filters.sourceDepartmentId}
-                        onChange={(e) => handleFilterChange('sourceDepartmentId', e.target.value)}
+                        value={filters.itemId}
+                        onChange={(e) => handleFilterChange('itemId', e.target.value)}
+                        className="h-10 rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                       >
-                        <option value="">すべて</option>
-                        {departments.map((dept) => (
-                          <option key={dept.id} value={dept.id}>
-                            {dept.name}
+                        <option value="">すべての備品</option>
+                        {items.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.name}
                           </option>
                         ))}
                       </Select>
                     </div>
-                  )}
 
-                  {/* 発送日範囲 */}
-                  <div className="md:col-span-2 lg:col-span-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      発送日（開始）
-                    </label>
-                    <Input
-                      type="date"
-                      value={filters.shippedFromDate}
-                      onChange={(e) => handleFilterChange('shippedFromDate', e.target.value)}
-                    />
+                    {/* 発送先選択 */}
+                    <div className="space-y-2">
+                      <label className="flex items-center text-sm font-semibold text-gray-700">
+                        <svg className="w-4 h-4 mr-1.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        発送先
+                      </label>
+                      <Select
+                        value={filters.destination}
+                        onChange={(e) => handleFilterChange('destination', e.target.value)}
+                        className="h-10 rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                      >
+                        <option value="">すべての発送先</option>
+                        {destinations.map((destination) => (
+                          <option key={destination} value={destination}>
+                            {destination}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+
+                    {/* 発送部署選択（管理者のみ） */}
+                    {user?.role === 'MANAGEMENT_USER' && (
+                      <div className="space-y-2">
+                        <label className="flex items-center text-sm font-semibold text-gray-700">
+                          <svg className="w-4 h-4 mr-1.5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                          </svg>
+                          発送部署
+                        </label>
+                        <Select
+                          value={filters.sourceDepartmentId}
+                          onChange={(e) => handleFilterChange('sourceDepartmentId', e.target.value)}
+                          className="h-10 rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                        >
+                          <option value="">すべての部署</option>
+                          {departments.map((dept) => (
+                            <option key={dept.id} value={dept.id}>
+                              {dept.name}
+                            </option>
+                          ))}
+                        </Select>
+                      </div>
+                    )}
+
+                    {/* 発送日範囲 - 開始 */}
+                    <div className="space-y-2">
+                      <label className="flex items-center text-sm font-semibold text-gray-700">
+                        <svg className="w-4 h-4 mr-1.5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        発送日（開始）
+                      </label>
+                      <Input
+                        type="date"
+                        value={filters.shippedFromDate}
+                        onChange={(e) => handleFilterChange('shippedFromDate', e.target.value)}
+                        className="h-10 rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    {/* 発送日範囲 - 終了 */}
+                    <div className="space-y-2">
+                      <label className="flex items-center text-sm font-semibold text-gray-700">
+                        <svg className="w-4 h-4 mr-1.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        発送日（終了）
+                      </label>
+                      <Input
+                        type="date"
+                        value={filters.shippedToDate}
+                        onChange={(e) => handleFilterChange('shippedToDate', e.target.value)}
+                        className="h-10 rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                  <div className={user?.role === 'MANAGEMENT_USER' ? 'lg:col-start-4' : 'lg:col-start-3'}>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      発送日（終了）
-                    </label>
-                    <Input
-                      type="date"
-                      value={filters.shippedToDate}
-                      onChange={(e) => handleFilterChange('shippedToDate', e.target.value)}
-                    />
+                  <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200">
+                    <Button 
+                      type="submit"
+                      className="flex-1 sm:flex-initial bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                      検索
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="secondary" 
+                      onClick={handleClearFilters}
+                      className="flex-1 sm:flex-initial bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      クリア
+                    </Button>
                   </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <Button type="submit">
-                    検索
-                  </Button>
-                  <Button type="button" variant="secondary" onClick={handleClearFilters}>
-                    クリア
-                  </Button>
-                </div>
-              </form>
+                </form>
+              </div>
             )}
           </div>
 
@@ -358,23 +394,23 @@ export default function ShipmentsPage() {
               {hasActiveFilters ? '検索条件に一致する発送が見つかりません' : '登録された発送がありません'}
             </div>
           ) : (
-            <>
-              <div className="space-y-2">
-                {/* ヘッダー */}
-                <div className={`grid grid-cols-1 sm:grid-cols-4 ${user.role === 'MANAGEMENT_USER' ? 'lg:grid-cols-8' : 'lg:grid-cols-7'} gap-2 px-3 py-2 border-b border-gray-200`}>
-                  <div className="text-sm font-medium text-gray-700">発送日</div>
-                  <div className="text-sm font-medium text-gray-700">備品名</div>
-                  <div className="text-sm font-medium text-gray-700">数量</div>
-                  <div className="text-sm font-medium text-gray-700">発送先</div>
-                  <div className="text-sm font-medium text-gray-700">担当者</div>
-                  <div className="text-sm font-medium text-gray-700">発送者</div>
-                  {user.role === 'MANAGEMENT_USER' && <div className="text-sm font-medium text-gray-700">発送元部署</div>}
-                  <div className="text-sm font-medium text-gray-700">操作</div>
+            <div>
+              <div className="overflow-x-auto shadow-sm rounded-lg border border-gray-200 bg-white" style={{ padding: '2rem', minWidth: '800px' }}>
+                  {/* ヘッダー */}
+                  <div className={`grid grid-cols-1 sm:grid-cols-4 ${user.role === 'MANAGEMENT_USER' ? 'lg:grid-cols-8' : 'lg:grid-cols-7'} gap-2 px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-300 rounded-lg w-full`} style={{ minWidth: '800px' }}>
+                  <div className="text-sm font-semibold text-gray-800">発送日</div>
+                  <div className="text-sm font-semibold text-gray-800">備品名</div>
+                  <div className="text-sm font-semibold text-gray-800">数量</div>
+                  <div className="text-sm font-semibold text-gray-800">発送先</div>
+                  <div className="text-sm font-semibold text-gray-800">担当者</div>
+                  <div className="text-sm font-semibold text-gray-800">発送者</div>
+                  {user.role === 'MANAGEMENT_USER' && <div className="text-sm font-semibold text-gray-800">発送元部署</div>}
+                  <div className="text-sm font-semibold text-gray-800">操作</div>
                 </div>
                 
                 {/* データ行 */}
                 {shipments.map((shipment) => (
-                  <div key={shipment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div key={shipment.id} className="flex items-center justify-between px-6 py-4 mt-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors w-full" style={{ minWidth: '800px' }}>
                     <div className={`flex-1 grid grid-cols-1 sm:grid-cols-4 ${user.role === 'MANAGEMENT_USER' ? 'lg:grid-cols-8' : 'lg:grid-cols-7'} gap-2 items-center`}>
                       <div className="text-sm text-gray-700">
                         {shipment.shippedAt 
@@ -456,9 +492,8 @@ export default function ShipmentsPage() {
                     </div>
                   </div>
                 ))}
-              </div>
-
-              {pagination.totalPages > 1 && (
+                  
+                  {pagination.totalPages > 1 && (
                 <div className="flex justify-between items-center mt-6">
                   <div className="text-sm text-gray-600">
                     {pagination.total}件中 {((pagination.page - 1) * pagination.limit) + 1}-
@@ -487,7 +522,8 @@ export default function ShipmentsPage() {
                   </div>
                 </div>
               )}
-            </>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
