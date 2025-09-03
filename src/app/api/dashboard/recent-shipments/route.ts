@@ -1,14 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getUserFromHeaders } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id')
-    const userRole = request.headers.get('x-user-role')
-    const departmentId = request.headers.get('x-department-id')
+    // Get user data from DB using JWT userId in headers
+    const user = await getUserFromHeaders(request)
     
-    console.log('[Recent Shipments] Request headers:', { userId, userRole, departmentId })
-    console.log('[Recent Shipments] Using departmentId for filtering:', departmentId)
+    if (!user) {
+      console.error('[Recent Shipments] User not found or not authenticated')
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+    
+    console.log('[Recent Shipments] Processing with real-time user data:', {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      departmentId: user.departmentId
+    })
+
+    return await processRequest(request, user)
+  } catch (error) {
+    console.error('Get dashboard recent shipments error:', error)
+    return NextResponse.json(
+      { success: false, error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+async function processRequest(request: NextRequest, user: any) {
+  try {
+    console.log('[Recent Shipments] Processing request with user:', {
+      userId: user.id,
+      role: user.role,
+      departmentId: user.departmentId
+    })
 
     const url = new URL(request.url)
     const searchParams = url.searchParams
@@ -54,9 +84,13 @@ export async function GET(request: NextRequest) {
     // 部署フィルター
     const additionalFilters: Record<string, any>[] = []
     
-    if (userRole === 'DEPARTMENT_USER') {
+    if (user.role === 'DEPARTMENT_USER') {
       // 部署ユーザーは自部署の発送のみ表示
-      additionalFilters.push({ shipmentDepartmentId: parseInt(departmentId!) })
+      console.log('[Recent Shipments] Filtering by departmentId for DEPARTMENT_USER:', {
+        userId: user.id,
+        departmentId: user.departmentId
+      })
+      additionalFilters.push({ shipmentDepartmentId: user.departmentId })
     } else {
       // 管理者の場合のフィルター
       if (filterDepartmentId && filterDepartmentId !== 'all') {
@@ -75,6 +109,9 @@ export async function GET(request: NextRequest) {
         ]
       }
     }
+
+    console.log('[Recent Shipments] Final WHERE clause:', JSON.stringify(where, null, 2))
+    console.log('[Recent Shipments] Additional filters applied:', additionalFilters)
 
     const shipments = await prisma.shipment.findMany({
       where,

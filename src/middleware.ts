@@ -36,14 +36,12 @@ export async function middleware(request: NextRequest) {
       const payload = await verifyJWTEdge(token)
       if (payload) {
         console.log(`[Middleware] ${pathname} - JWT verified successfully`)
-        console.log(`[Middleware] ${pathname} - Payload:`, { userId: payload.userId, role: payload.role, departmentId: payload.departmentId })
+        console.log(`[Middleware] ${pathname} - Payload:`, { userId: payload.userId, email: payload.email })
         
         const response = NextResponse.next()
         response.headers.set('x-user-id', payload.userId)
-        response.headers.set('x-user-role', payload.role)
-        if (payload.departmentId) {
-          response.headers.set('x-department-id', String(payload.departmentId))
-        }
+        response.headers.set('x-user-email', payload.email)
+        // Remove role and departmentId headers - will be fetched from DB in each API
         
         console.log(`[Middleware] ${pathname} - Headers added successfully`)
         return response

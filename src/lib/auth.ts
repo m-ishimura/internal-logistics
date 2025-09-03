@@ -10,8 +10,8 @@ void (process.env.SESSION_SECRET || 'fallback-session') // Reserved for future s
 export interface JWTPayload {
   userId: string
   email: string
-  role: string
-  departmentId: number
+  // role: removed - will be fetched from DB for real-time updates
+  // departmentId: removed - will be fetched from DB for real-time updates
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -25,9 +25,8 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 export function generateJWT(user: User): string {
   const payload: JWTPayload = {
     userId: String(user.id),
-    email: user.email,
-    role: user.role,
-    departmentId: user.departmentId
+    email: user.email
+    // role and departmentId removed - will be fetched from DB for security
   }
   
   return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' })
@@ -94,7 +93,7 @@ export async function verifyJWTEdge(token: string): Promise<JWTPayload | null> {
     }
 
     // Ensure required fields exist
-    if (!decodedPayload.userId || !decodedPayload.email || !decodedPayload.role) {
+    if (!decodedPayload.userId || !decodedPayload.email) {
       throw new Error('Invalid JWT payload')
     }
 
@@ -127,24 +126,8 @@ export async function verifyJWTWithDB(token: string): Promise<{ payload: JWTPayl
       return null
     }
 
-    // Check for mismatches between JWT and DB
-    const roleMismatch = user.role !== payload.role
-    const deptMismatch = user.departmentId !== payload.departmentId
-    
-    if (roleMismatch || deptMismatch) {
-      console.warn('[Auth] JWT/DB mismatch detected:', {
-        userId: payload.userId,
-        jwtRole: payload.role,
-        dbRole: user.role,
-        jwtDepartmentId: payload.departmentId,
-        dbDepartmentId: user.departmentId,
-        roleMismatch,
-        deptMismatch
-      })
-      
-      // Return null to trigger token refresh
-      return null
-    }
+    // JWT now only contains userId and email - no role/departmentId to check
+    // Always return user data from DB for real-time role updates
 
     console.log('[Auth] JWT/DB validation successful for user:', payload.userId)
     return { payload, user }
@@ -231,9 +214,8 @@ export async function refreshUserToken(userId: number): Promise<string | null> {
 
     console.log('[Auth] Generating fresh JWT for user:', {
       userId: user.id,
-      email: user.email,
-      role: user.role,
-      departmentId: user.departmentId
+      email: user.email
+      // role and departmentId will be fetched from DB when needed
     })
 
     return generateJWT(user)
@@ -349,4 +331,32 @@ export async function setAuthCookie(token: string) {
 export async function clearAuthCookie() {
   const cookieStore = await cookies()
   cookieStore.delete('auth-token')
+}
+
+// Helper function to get current user from request headers (for API routes)
+export async function getUserFromHeaders(request: NextRequest): Promise<User | null> {
+  try {
+    const userId = request.headers.get('x-user-id')
+    
+    if (!userId) {
+      return null
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(userId) },
+      include: { department: true }
+    })
+
+    console.log('[Auth] User fetched from DB via headers:', {
+      userId: user?.id,
+      email: user?.email,
+      role: user?.role,
+      departmentId: user?.departmentId
+    })
+
+    return user
+  } catch (error) {
+    console.error('[Auth] Failed to get user from headers:', error)
+    return null
+  }
 }
