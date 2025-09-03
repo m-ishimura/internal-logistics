@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { shipmentSchema, paginationSchema } from '@/lib/validation'
+import { getUserFromHeaders } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
-    // const userId = request.headers.get('x-user-id')
-    const userRole = request.headers.get('x-user-role')
-    const departmentId = request.headers.get('x-department-id')
+    // Get user data from DB using JWT userId in headers
+    const user = await getUserFromHeaders(request)
+    
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
 
     const url = new URL(request.url)
     const queryParams = Object.fromEntries(url.searchParams.entries())
@@ -36,8 +43,8 @@ export async function GET(request: NextRequest) {
     const where: Record<string, any> = {}
 
     // Department users can only see their own department's shipments
-    if (userRole === 'DEPARTMENT_USER') {
-      where.shipmentDepartmentId = parseInt(departmentId!)
+    if (user.role === 'DEPARTMENT_USER') {
+      where.shipmentDepartmentId = user.departmentId
     }
 
     // 新しい検索条件
@@ -51,7 +58,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    if (sourceDepartmentId && userRole === 'MANAGEMENT_USER') {
+    if (sourceDepartmentId && user.role === 'MANAGEMENT_USER') {
       where.shipmentDepartmentId = parseInt(sourceDepartmentId)
     }
 
@@ -148,9 +155,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id')!
-    const userRole = request.headers.get('x-user-role')
-    const departmentId = request.headers.get('x-department-id')!
+    // Get user data from DB using JWT userId in headers
+    const user = await getUserFromHeaders(request)
+    
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
 
     const body = await request.json()
     const { error, value } = shipmentSchema.validate(body)
@@ -163,12 +176,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify the item belongs to the user's department (for department users)
-    if (userRole === 'DEPARTMENT_USER') {
+    if (user.role === 'DEPARTMENT_USER') {
       const item = await prisma.item.findUnique({
         where: { id: value.itemId }
       })
 
-      if (!item || item.departmentId !== parseInt(departmentId!)) {
+      if (!item || item.departmentId !== user.departmentId) {
         return NextResponse.json(
           { success: false, error: 'Item not found or access denied' },
           { status: 403 }
@@ -179,9 +192,9 @@ export async function POST(request: NextRequest) {
     const shipment = await prisma.shipment.create({
       data: {
         ...value,
-        senderId: parseInt(userId!),
-        createdBy: parseInt(userId!),
-        updatedBy: parseInt(userId!)
+        senderId: user.id,
+        createdBy: user.id,
+        updatedBy: user.id
       },
       include: {
         item: true,

@@ -26,7 +26,8 @@
       "mcp__serena__think_about_collected_information",
       "mcp__serena__find_referencing_symbols",
       "mcp__serena__find_file",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": [],

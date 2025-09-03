@@ -63,6 +63,18 @@ export default function Header() {
               発送管理
               <span className="absolute inset-x-0 -bottom-1 h-1 bg-blue-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
             </Link>
+            <a 
+              href="https://www.notion.so/i-cube-regulations-manuals/26393ea640b48015be95e036a6062911"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative px-8 py-4 text-lg font-bold text-gray-700 hover:text-blue-600 transition-all duration-300 hover:bg-blue-50 rounded-lg group flex items-center space-x-2"
+            >
+              <span>マニュアル</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              <span className="absolute inset-x-0 -bottom-1 h-1 bg-blue-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
+            </a>
             {user.role === 'MANAGEMENT_USER' && (
               <div className="relative" onMouseLeave={() => setAdminMenuOpen(false)}>
                 <button
@@ -179,6 +191,18 @@ export default function Header() {
             >
               発送管理
             </Link>
+            <a 
+              href="https://www.notion.so/i-cube-regulations-manuals/26393ea640b48015be95e036a6062911"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block px-4 py-3 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 flex items-center space-x-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <span>マニュアル</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
             {user.role === 'MANAGEMENT_USER' && (
               <div>
                 <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">

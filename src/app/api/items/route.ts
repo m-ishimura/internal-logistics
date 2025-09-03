@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { itemSchema, paginationSchema } from '@/lib/validation'
+import { getUserFromHeaders } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
-    // const userId = request.headers.get('x-user-id')
-    const userRole = request.headers.get('x-user-role')
-    const departmentId = request.headers.get('x-department-id')
+    // Get user data from DB using JWT userId in headers
+    const user = await getUserFromHeaders(request)
+    
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
 
     const url = new URL(request.url)
     const queryParams = Object.fromEntries(url.searchParams.entries())
@@ -26,12 +33,12 @@ export async function GET(request: NextRequest) {
     const where: Record<string, any> = {}
 
     // For shipment creation, all users (including management) can only see their own department's items
-    if (forShipment && departmentId) {
-      where.departmentId = parseInt(departmentId)
+    if (forShipment) {
+      where.departmentId = user.departmentId
     }
     // For item management, department users can only see their own department's items
-    else if (userRole === 'DEPARTMENT_USER' && departmentId) {
-      where.departmentId = parseInt(departmentId)
+    else if (user.role === 'DEPARTMENT_USER') {
+      where.departmentId = user.departmentId
     }
 
     if (search) {
@@ -78,8 +85,17 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const departmentId = request.headers.get('x-department-id')
-    console.log('[DEBUG] API - departmentId from header:', departmentId)
+    // Get user data from DB using JWT userId in headers
+    const user = await getUserFromHeaders(request)
+    
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+    
+    console.log('[DEBUG] API - user from DB:', { id: user.id, departmentId: user.departmentId })
 
     const body = await request.json()
     console.log('[DEBUG] API - request body:', body)
@@ -87,7 +103,7 @@ export async function POST(request: NextRequest) {
     // Automatically set departmentId from authenticated user's department
     const requestData = {
       ...body,
-      departmentId: parseInt(departmentId || '0')
+      departmentId: user.departmentId
     }
     console.log('[DEBUG] API - data with departmentId:', requestData)
     
@@ -102,7 +118,7 @@ export async function POST(request: NextRequest) {
     }
 
     // All users can only create items for their own department
-    if (value.departmentId !== parseInt(departmentId || '0')) {
+    if (value.departmentId !== user.departmentId) {
       return NextResponse.json(
         { success: false, error: 'Access denied - can only create items for your department' },
         { status: 403 }
