@@ -27,12 +27,20 @@ export default function ShipmentsPage() {
   const [showFilters, setShowFilters] = useState(false)
   
   // フィルター状態
-  const [filters, setFilters] = useState({
-    itemId: '',
-    destination: '',
-    sourceDepartmentId: '',
-    shippedFromDate: '',
-    shippedToDate: ''
+  const [filters, setFilters] = useState(() => {
+    const today = new Date()
+    const sevenDaysAgo = new Date(today)
+    sevenDaysAgo.setDate(today.getDate() - 7)
+    const sevenDaysLater = new Date(today)
+    sevenDaysLater.setDate(today.getDate() + 7)
+    
+    return {
+      itemId: '',
+      destination: '',
+      sourceDepartmentId: '',
+      shippedFromDate: sevenDaysAgo.toISOString().split('T')[0],
+      shippedToDate: sevenDaysLater.toISOString().split('T')[0]
+    }
   })
   
   const [pagination, setPagination] = useState({
@@ -119,7 +127,7 @@ export default function ShipmentsPage() {
 
   useEffect(() => {
     if (user) {
-      fetchShipments()
+      fetchShipments(filters)
       fetchItems()
       fetchDestinations()
       if (user.role === 'MANAGEMENT_USER') {
@@ -142,14 +150,23 @@ export default function ShipmentsPage() {
   }
 
   const handleClearFilters = () => {
+    const today = new Date()
+    const sevenDaysAgo = new Date(today)
+    sevenDaysAgo.setDate(today.getDate() - 7)
+    const sevenDaysLater = new Date(today)
+    sevenDaysLater.setDate(today.getDate() + 7)
+    
     setFilters({
       itemId: '',
       destination: '',
       sourceDepartmentId: '',
-      shippedFromDate: '',
-      shippedToDate: ''
+      shippedFromDate: sevenDaysAgo.toISOString().split('T')[0],
+      shippedToDate: sevenDaysLater.toISOString().split('T')[0]
     })
-    fetchShipments({}, 1)
+    fetchShipments({
+      shippedFromDate: sevenDaysAgo.toISOString().split('T')[0],
+      shippedToDate: sevenDaysLater.toISOString().split('T')[0]
+    }, 1)
   }
 
   const hasActiveFilters = Object.values(filters).some(value => value !== '')
