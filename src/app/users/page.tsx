@@ -33,7 +33,7 @@ export default function UsersPage() {
       fetchUsers(1)
       fetchDepartments()
     }
-  }, [user])
+  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!user || user.role !== 'MANAGEMENT_USER') {
     return (

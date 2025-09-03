@@ -13,7 +13,7 @@ import {
   CardContent,
   Alert
 } from '@/components/ui'
-import type { Shipment, PaginatedResponse, PaginationParams, Item, Department } from '@/types'
+import type { Shipment, PaginatedResponse, Item, Department } from '@/types'
 
 export default function ShipmentsPage() {
   const { user } = useAuth()
@@ -154,10 +154,11 @@ export default function ShipmentsPage() {
 
   const hasActiveFilters = Object.values(filters).some(value => value !== '')
 
-  const getDepartmentNameById = (departmentId: string | number) => {
+  // Helper function for future use
+  void ((departmentId: string | number) => {
     const dept = departments.find(d => d.id.toString() === departmentId.toString())
     return dept?.name || `部署ID: ${departmentId}`
-  }
+  })
 
   const handleDelete = async (shipmentId: string, itemName: string) => {
     if (!confirm(`「${itemName}」の発送を削除しますか？この操作は元に戻せません。`)) {

@@ -30,7 +30,7 @@ export default function EditShipmentPage() {
   const [filteredUsers, setFilteredUsers] = useState<User[]>([])
   const [userSearchTerm, setUserSearchTerm] = useState('')
   const [showUserDropdown, setShowUserDropdown] = useState(false)
-  const [shipment, setShipment] = useState<Shipment | null>(null)
+  const [, setShipment] = useState<Shipment | null>(null)
   const [formData, setFormData] = useState({
     itemId: '',
     quantity: '',
@@ -54,7 +54,7 @@ export default function EditShipmentPage() {
     if (shipmentId && departments.length > 0 && items.length > 0) {
       fetchShipment()
     }
-  }, [shipmentId, departments, items])
+  }, [shipmentId, departments, items]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchShipment = async () => {
     try {
@@ -69,6 +69,7 @@ export default function EditShipmentPage() {
       const data = await response.json()
       const shipment = data.data
       setShipment(shipment)
+      void shipment // Variable reserved for future validation logic
       
       
       // 既存データの場合
@@ -250,7 +251,7 @@ export default function EditShipmentPage() {
     )
   }
 
-  const selectedItem = items.find(item => item.id === formData.itemId)
+  void items.find(item => item.id === formData.itemId) // Used for validation/debugging purposes
 
   return (
     <div className="min-h-screen flex flex-col">

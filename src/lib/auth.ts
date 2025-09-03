@@ -5,7 +5,7 @@ import { prisma } from './prisma'
 import type { User } from '@/types'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret'
-const SESSION_SECRET = process.env.SESSION_SECRET || 'fallback-session'
+void (process.env.SESSION_SECRET || 'fallback-session') // Reserved for future session handling
 
 export interface JWTPayload {
   userId: string

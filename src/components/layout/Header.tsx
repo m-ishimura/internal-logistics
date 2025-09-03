@@ -4,7 +4,6 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/contexts/AuthContext'
-import { Button } from '@/components/ui'
 
 export default function Header() {
   const { user, logout } = useAuth()

@@ -12,7 +12,7 @@ import {
   CardContent,
   Alert
 } from '@/components/ui'
-import type { Item, Department } from '@/types'
+import type { Item } from '@/types'
 
 interface EditItemPageProps {
   params: Promise<{ id: string }>
@@ -46,7 +46,7 @@ export default function EditItemPage({ params }: EditItemPageProps) {
       fetchItem()
       // No longer fetch departments as department cannot be changed
     }
-  }, [itemId, user])
+  }, [itemId, user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchItem = async () => {
     try {

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 
 const ENTRA_ID_CONFIG = {
   clientId: process.env.ENTRA_ID_CLIENT_ID!,
@@ -7,7 +7,7 @@ const ENTRA_ID_CONFIG = {
   clientSecret: process.env.ENTRA_ID_CLIENT_SECRET!
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Check if all required environment variables are set
     if (!ENTRA_ID_CONFIG.clientId || !ENTRA_ID_CONFIG.tenantId || !ENTRA_ID_CONFIG.redirectUri) {

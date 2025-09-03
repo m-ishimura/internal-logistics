@@ -32,7 +32,7 @@ export default function DashboardPage() {
       fetchRecentShipments()
       fetchDepartments()
     }
-  }, [user, selectedDepartment, selectedDestinationDepartment, startDate, endDate])
+  }, [user, selectedDepartment, selectedDestinationDepartment, startDate, endDate]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchRecentShipments = async () => {
     try {

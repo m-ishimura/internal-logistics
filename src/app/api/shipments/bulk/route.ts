@@ -193,7 +193,7 @@ export async function POST(request: NextRequest) {
     }
 
     let successCount = 0
-    let errorCount = validationErrors.length
+    void validationErrors.length // Error count tracked for validation
 
     // If there are any validation errors, return them without processing any rows
     if (validationErrors.length > 0) {

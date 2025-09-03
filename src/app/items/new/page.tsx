@@ -12,7 +12,6 @@ import {
   CardContent,
   Alert
 } from '@/components/ui'
-import type { Department } from '@/types'
 
 export default function NewItemPage() {
   const { user } = useAuth()
