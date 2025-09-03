@@ -6,7 +6,6 @@ import { useAuth } from '@/contexts/AuthContext'
 import { 
   Button, 
   Input, 
-  Select,
   Card, 
   CardHeader, 
   CardTitle, 
@@ -20,37 +19,21 @@ export default function NewItemPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [departments, setDepartments] = useState<Department[]>([])
+  // Removed departments state as it's no longer needed
   const [formData, setFormData] = useState({
     name: '',
     unit: '',
-    departmentId: ''
+    departmentId: 0
   })
 
   useEffect(() => {
     if (user) {
-      if (user.role === 'DEPARTMENT_USER') {
-        setFormData(prev => ({ ...prev, departmentId: String(user.departmentId) }))
-      } else {
-        fetchDepartments()
-      }
+      // Both DEPARTMENT_USER and MANAGEMENT_USER can only register items for their own department
+      setFormData(prev => ({ ...prev, departmentId: user.departmentId }))
     }
   }, [user])
 
-  const fetchDepartments = async () => {
-    try {
-      const response = await fetch('/api/departments', {
-        credentials: 'include'
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        setDepartments(data.data)
-      }
-    } catch (err) {
-      console.error('Failed to fetch departments:', err)
-    }
-  }
+  // Removed fetchDepartments function as departments are no longer selectable
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -58,17 +41,27 @@ export default function NewItemPage() {
     setError('')
 
     try {
+      // Ensure departmentId is set from user data
+      const submitData = {
+        ...formData,
+        departmentId: user?.departmentId || 0
+      }
+      
+      console.log('[DEBUG] Form data being sent:', submitData)
+      console.log('[DEBUG] User data:', user)
+      
       const response = await fetch('/api/items', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         credentials: 'include',
-        body: JSON.stringify(formData)
+        body: JSON.stringify(submitData)
       })
 
       if (!response.ok) {
         const error = await response.json()
+        console.log('[DEBUG] API error response:', error)
         throw new Error(error.error || '備品の登録に失敗しました')
       }
 
@@ -80,7 +73,7 @@ export default function NewItemPage() {
     }
   }
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: string, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
@@ -130,22 +123,19 @@ export default function NewItemPage() {
               help="数量の単位を入力してください"
             />
 
-            {user.role === 'MANAGEMENT_USER' && (
-              <Select
-                id="departmentId"
-                label="担当部署"
-                value={formData.departmentId}
-                onChange={(e) => handleChange('departmentId', e.target.value)}
-                required
-                help="この備品を管理する部署を選択してください"
-              >
-                <option value="">部署を選択してください</option>
-                {departments.map((dept) => (
-                  <option key={dept.id} value={dept.id}>
-                    {dept.name}
-                  </option>
-                ))}
-              </Select>
+            {/* Department field is automatically set to user's department - no manual selection needed */}
+            {user && (
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  担当部署
+                </label>
+                <div className="px-3 py-2 border border-gray-300 bg-gray-50 rounded-md text-gray-600">
+                  {user.department?.name || '未設定'}
+                </div>
+                <p className="text-sm text-gray-500">
+                  備品は自部署にのみ登録できます
+                </p>
+              </div>
             )}
 
             <div className="flex gap-4 pt-6">

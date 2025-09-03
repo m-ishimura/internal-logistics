@@ -6,7 +6,6 @@ import { useAuth } from '@/contexts/AuthContext'
 import { 
   Button, 
   Input, 
-  Select,
   Card, 
   CardHeader, 
   CardTitle, 
@@ -26,7 +25,7 @@ export default function EditItemPage({ params }: EditItemPageProps) {
   const [fetchLoading, setFetchLoading] = useState(true)
   const [error, setError] = useState('')
   const [item, setItem] = useState<Item | null>(null)
-  const [departments, setDepartments] = useState<Department[]>([])
+  // Removed departments state as it's no longer needed
   const [formData, setFormData] = useState({
     name: '',
     unit: '',
@@ -45,9 +44,7 @@ export default function EditItemPage({ params }: EditItemPageProps) {
   useEffect(() => {
     if (itemId && user) {
       fetchItem()
-      if (user.role === 'MANAGEMENT_USER') {
-        fetchDepartments()
-      }
+      // No longer fetch departments as department cannot be changed
     }
   }, [itemId, user])
 
@@ -81,20 +78,7 @@ export default function EditItemPage({ params }: EditItemPageProps) {
     }
   }
 
-  const fetchDepartments = async () => {
-    try {
-      const response = await fetch('/api/departments', {
-        credentials: 'include'
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        setDepartments(data.data)
-      }
-    } catch (err) {
-      console.error('Failed to fetch departments:', err)
-    }
-  }
+  // Removed fetchDepartments function as departments are no longer changeable
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -224,23 +208,18 @@ export default function EditItemPage({ params }: EditItemPageProps) {
                   help="数量の単位を入力してください"
                 />
 
-                {user.role === 'MANAGEMENT_USER' && (
-                  <Select
-                    id="departmentId"
-                    label="担当部署"
-                    value={formData.departmentId.toString()}
-                    onChange={(e) => handleChange('departmentId', parseInt(e.target.value))}
-                    required
-                    help="この備品を管理する部署を選択してください"
-                  >
-                    <option value="">部署を選択してください</option>
-                    {departments.map((dept) => (
-                      <option key={dept.id} value={dept.id}>
-                        {dept.name}
-                      </option>
-                    ))}
-                  </Select>
-                )}
+                {/* Department field is read-only - shows current department */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    担当部署
+                  </label>
+                  <div className="px-3 py-2 border border-gray-300 bg-gray-50 rounded-md text-gray-600">
+                    {item?.department?.name || '未設定'}
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    部署は変更できません
+                  </p>
+                </div>
 
                 <div className="border-t pt-6">
                   <div className="flex justify-between">

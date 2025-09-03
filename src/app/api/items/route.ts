@@ -78,11 +78,21 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const userRole = request.headers.get('x-user-role')
     const departmentId = request.headers.get('x-department-id')
+    console.log('[DEBUG] API - departmentId from header:', departmentId)
 
     const body = await request.json()
-    const { error, value } = itemSchema.validate(body)
+    console.log('[DEBUG] API - request body:', body)
+    
+    // Automatically set departmentId from authenticated user's department
+    const requestData = {
+      ...body,
+      departmentId: parseInt(departmentId || '0')
+    }
+    console.log('[DEBUG] API - data with departmentId:', requestData)
+    
+    const { error, value } = itemSchema.validate(requestData)
+    console.log('[DEBUG] API - validation result:', { error: error?.details, value })
     
     if (error) {
       return NextResponse.json(
@@ -91,8 +101,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Department users can only create items for their own department
-    if (userRole === 'DEPARTMENT_USER' && value.departmentId !== departmentId) {
+    // All users can only create items for their own department
+    if (value.departmentId !== parseInt(departmentId || '0')) {
       return NextResponse.json(
         { success: false, error: 'Access denied - can only create items for your department' },
         { status: 403 }

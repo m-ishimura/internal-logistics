@@ -46,7 +46,7 @@ export function verifyJWT(token: string): JWTPayload | null {
   }
 }
 
-// Edge Runtime compatible JWT verification
+// Edge Runtime compatible JWT verification with proper signature verification
 export async function verifyJWTEdge(token: string): Promise<JWTPayload | null> {
   try {
     console.log('[Auth] Edge - Verifying JWT token:', token.substring(0, 50) + '...')
@@ -56,28 +56,100 @@ export async function verifyJWTEdge(token: string): Promise<JWTPayload | null> {
       throw new Error('Invalid JWT format')
     }
 
-    // Decode payload without verification for Edge Runtime
-    const base64Payload = parts[1].replace(/-/g, '+').replace(/_/g, '/')
-    // Add padding if necessary
+    const [header, payload, signature] = parts
+    
+    // Verify signature using Web Crypto API (Edge Runtime compatible)
+    const key = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(JWT_SECRET),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['verify']
+    )
+    
+    const data = new TextEncoder().encode(`${header}.${payload}`)
+    const signatureBytes = Uint8Array.from(atob(signature.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0))
+    
+    const isValid = await crypto.subtle.verify(
+      'HMAC',
+      key,
+      signatureBytes,
+      data
+    )
+    
+    if (!isValid) {
+      throw new Error('Invalid JWT signature')
+    }
+
+    // Decode payload
+    const base64Payload = payload.replace(/-/g, '+').replace(/_/g, '/')
     const padding = '='.repeat((4 - base64Payload.length % 4) % 4)
     const paddedPayload = base64Payload + padding
     
-    const payload = JSON.parse(atob(paddedPayload))
+    const decodedPayload = JSON.parse(atob(paddedPayload))
     
     // Check expiration
-    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+    if (decodedPayload.exp && decodedPayload.exp < Math.floor(Date.now() / 1000)) {
       throw new Error('JWT token expired')
     }
 
     // Ensure required fields exist
-    if (!payload.userId || !payload.email || !payload.role) {
+    if (!decodedPayload.userId || !decodedPayload.email || !decodedPayload.role) {
       throw new Error('Invalid JWT payload')
     }
 
-    console.log('[Auth] Edge - JWT verification successful:', payload)
-    return payload as JWTPayload
+    console.log('[Auth] Edge - JWT verification successful:', decodedPayload)
+    return decodedPayload as JWTPayload
   } catch (error) {
     console.error('[Auth] Edge - JWT verification failed:', error)
+    return null
+  }
+}
+
+// Enhanced JWT verification with DB validation for critical operations
+export async function verifyJWTWithDB(token: string): Promise<{ payload: JWTPayload, user: User } | null> {
+  try {
+    // First verify the JWT token itself
+    const payload = await verifyJWTEdge(token)
+    if (!payload) {
+      console.log('[Auth] JWT token verification failed')
+      return null
+    }
+
+    // Get current user data from database
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(payload.userId) },
+      include: { department: true }
+    })
+
+    if (!user) {
+      console.log('[Auth] User not found in database:', payload.userId)
+      return null
+    }
+
+    // Check for mismatches between JWT and DB
+    const roleMismatch = user.role !== payload.role
+    const deptMismatch = user.departmentId !== payload.departmentId
+    
+    if (roleMismatch || deptMismatch) {
+      console.warn('[Auth] JWT/DB mismatch detected:', {
+        userId: payload.userId,
+        jwtRole: payload.role,
+        dbRole: user.role,
+        jwtDepartmentId: payload.departmentId,
+        dbDepartmentId: user.departmentId,
+        roleMismatch,
+        deptMismatch
+      })
+      
+      // Return null to trigger token refresh
+      return null
+    }
+
+    console.log('[Auth] JWT/DB validation successful for user:', payload.userId)
+    return { payload, user }
+  } catch (error) {
+    console.error('[Auth] JWT/DB verification error:', error)
     return null
   }
 }
@@ -140,6 +212,33 @@ export async function getCurrentUserFromRequest(request: Request): Promise<User 
     return user
   } catch (error) {
     console.error('getCurrentUserFromRequest error:', error)
+    return null
+  }
+}
+
+// Generate a new JWT with fresh user data from database
+export async function refreshUserToken(userId: number): Promise<string | null> {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { department: true }
+    })
+
+    if (!user) {
+      console.log('[Auth] User not found for token refresh:', userId)
+      return null
+    }
+
+    console.log('[Auth] Generating fresh JWT for user:', {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      departmentId: user.departmentId
+    })
+
+    return generateJWT(user)
+  } catch (error) {
+    console.error('[Auth] Token refresh error:', error)
     return null
   }
 }

@@ -23,7 +23,9 @@
       "mcp__serena__search_for_pattern",
       "mcp__serena__find_symbol",
       "Read(C:\\Users\\MasahiroIshimura\\Desktop/**)",
-      "mcp__serena__think_about_collected_information"
+      "mcp__serena__think_about_collected_information",
+      "mcp__serena__find_referencing_symbols",
+      "mcp__serena__find_file"
     ],
     "deny": [],
     "ask": [],

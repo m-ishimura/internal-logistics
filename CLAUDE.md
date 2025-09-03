@@ -64,7 +64,7 @@ The application uses a multi-tenant architecture with department-based access co
 
 ### Role-Based Access Control
 - `DEPARTMENT_USER`: Access own department data only
-- `MANAGEMENT_USER`: Access all department data
+- `MANAGEMENT_USER`: Access all department data for viewing, but can only create/edit items in own department
 
 ## API Architecture
 
@@ -108,9 +108,11 @@ Following Japanese government design system:
 ## File Upload & Bulk Import
 
 ### CSV/Excel Support
-- Uses `papaparse` for CSV parsing
+- Uses `papaparse` for CSV parsing with automatic character encoding detection
+- `encoding-japanese` library for Shift_JIS/UTF-8 auto-detection (Windows compatibility)
 - `xlsx` library for Excel file handling
 - Server-side validation with detailed error reporting
+- Atomic transaction processing: all-or-nothing bulk imports with automatic rollback
 - Bulk import tracking with `BulkImport` and `BulkImportError` models
 
 ### Validation
@@ -187,3 +189,17 @@ NEXTAUTH_URL="http://localhost:3000"
 - Screen reader support with proper ARIA attributes
 - Keyboard navigation implementation
 - Japanese language support with appropriate fonts
+
+## Important Implementation Guidelines
+
+### Critical Business Logic Constraints
+- **Department Data Isolation**: Both regular users and management users can only create/edit items in their own department
+- **Permission-Based UI**: Edit/action buttons must be conditionally rendered based on department ownership
+- **Atomic Bulk Operations**: 1件でもエラーがあれば全件ロールバック (If any error occurs, rollback all records)
+
+### Development Practices
+- ALWAYS prefer editing existing files to creating new ones
+- Use `Number()` for type coercion when comparing department IDs (handles string/number inconsistencies)  
+- Implement proper fallback mechanisms when adding new features (e.g., encoding detection with UTF-8 fallback)
+- Add comprehensive error handling with try-catch blocks for external library integrations
+- When implementing role-based permissions, ensure API endpoints and UI components both enforce the same business rules

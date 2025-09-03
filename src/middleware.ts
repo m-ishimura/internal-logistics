@@ -32,9 +32,10 @@ export async function middleware(request: NextRequest) {
   // For API paths and protected paths with token, add user info headers
   if ((isApiPath || isProtectedPath) && token) {
     try {
+      // Use Edge-compatible JWT verification only
       const payload = await verifyJWTEdge(token)
       if (payload) {
-        console.log(`[Middleware] ${pathname} - Edge JWT verified successfully`)
+        console.log(`[Middleware] ${pathname} - JWT verified successfully`)
         console.log(`[Middleware] ${pathname} - Payload:`, { userId: payload.userId, role: payload.role, departmentId: payload.departmentId })
         
         const response = NextResponse.next()
@@ -47,7 +48,7 @@ export async function middleware(request: NextRequest) {
         console.log(`[Middleware] ${pathname} - Headers added successfully`)
         return response
       } else {
-        console.log(`[Middleware] ${pathname} - JWT verification returned null`)
+        console.log(`[Middleware] ${pathname} - JWT verification failed`)
         throw new Error('JWT verification failed')
       }
     } catch (error) {
@@ -58,9 +59,12 @@ export async function middleware(request: NextRequest) {
         const loginUrl = new URL('/login', request.url)
         return NextResponse.redirect(loginUrl)
       } else {
-        // For API paths, allow through but log the issue
-        console.log(`[Middleware] ${pathname} - API path with invalid token, allowing through`)
-        return NextResponse.next()
+        // For API paths, return 401
+        console.log(`[Middleware] ${pathname} - API path with invalid token, returning 401`)
+        return NextResponse.json(
+          { success: false, error: 'Authentication failed' },
+          { status: 401 }
+        )
       }
     }
   }

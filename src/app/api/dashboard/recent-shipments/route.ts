@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
     const departmentId = request.headers.get('x-department-id')
     
     console.log('[Recent Shipments] Request headers:', { userId, userRole, departmentId })
+    console.log('[Recent Shipments] Using departmentId for filtering:', departmentId)
 
     const url = new URL(request.url)
     const searchParams = url.searchParams

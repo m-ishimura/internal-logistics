@@ -73,6 +73,12 @@ export default function ItemsPage() {
     fetchItems({ search, page: newPage })
   }
 
+  // Helper function to check if user can edit an item
+  const canEditItem = (item: Item) => {
+    // Convert both to numbers for comparison
+    return Number(item.departmentId) === Number(user?.departmentId)
+  }
+
   if (!user) return null
 
   return (
@@ -213,16 +219,39 @@ export default function ItemsPage() {
                         </TableCell>
                         <TableCell className="text-center p-4">
                           <div className="flex justify-center gap-2">
-                            <Link href={`/items/${item.id}/edit`}>
-                              <Button variant="secondary" size="sm" className="text-xs px-3 py-1">
+                            {canEditItem(item) ? (
+                              <Link href={`/items/${item.id}/edit`}>
+                                <Button variant="secondary" size="sm" className="text-xs px-3 py-1">
+                                  編集
+                                </Button>
+                              </Link>
+                            ) : (
+                              <Button 
+                                variant="secondary" 
+                                size="sm" 
+                                className="text-xs px-3 py-1 opacity-50 cursor-not-allowed" 
+                                disabled
+                                title="他部署の備品は編集できません"
+                              >
                                 編集
                               </Button>
-                            </Link>
-                            <Link href={`/shipments/new?itemId=${item.id}`}>
-                              <Button size="sm" className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700">
+                            )}
+                            {canEditItem(item) ? (
+                              <Link href={`/shipments/new?itemId=${item.id}`}>
+                                <Button size="sm" className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700">
+                                  発送
+                                </Button>
+                              </Link>
+                            ) : (
+                              <Button 
+                                size="sm" 
+                                className="text-xs px-3 py-1 opacity-50 cursor-not-allowed" 
+                                disabled
+                                title="他部署の備品は発送できません"
+                              >
                                 発送
                               </Button>
-                            </Link>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>

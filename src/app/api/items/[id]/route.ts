@@ -29,6 +29,7 @@ export async function GET(
     }
 
     // Department users can only view their own department's items
+    // Management users can view all departments' items
     if (userRole === 'DEPARTMENT_USER' && item.departmentId !== parseInt(departmentId || '0')) {
       return NextResponse.json(
         { success: false, error: 'Access denied' },
@@ -55,7 +56,6 @@ export async function PUT(
 ) {
   try {
     const { id } = await params
-    const userRole = request.headers.get('x-user-role')
     const departmentId = request.headers.get('x-department-id')
 
     // Check if item exists
@@ -70,8 +70,8 @@ export async function PUT(
       )
     }
 
-    // Department users can only edit their own department's items
-    if (userRole === 'DEPARTMENT_USER' && existingItem.departmentId !== parseInt(departmentId || '0')) {
+    // All users can only edit their own department's items
+    if (existingItem.departmentId !== parseInt(departmentId || '0')) {
       return NextResponse.json(
         { success: false, error: 'Access denied' },
         { status: 403 }
@@ -88,8 +88,8 @@ export async function PUT(
       )
     }
 
-    // Department users can only assign items to their own department
-    if (userRole === 'DEPARTMENT_USER' && value.departmentId !== parseInt(departmentId || '0')) {
+    // All users can only assign items to their own department
+    if (value.departmentId !== parseInt(departmentId || '0')) {
       return NextResponse.json(
         { success: false, error: 'Access denied - can only assign items to your department' },
         { status: 403 }
@@ -123,7 +123,6 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-    const userRole = request.headers.get('x-user-role')
     const departmentId = request.headers.get('x-department-id')
 
     // Check if item exists
@@ -143,8 +142,8 @@ export async function DELETE(
       )
     }
 
-    // Department users can only delete their own department's items
-    if (userRole === 'DEPARTMENT_USER' && existingItem.departmentId !== parseInt(departmentId || '0')) {
+    // All users can only delete their own department's items
+    if (existingItem.departmentId !== parseInt(departmentId || '0')) {
       return NextResponse.json(
         { success: false, error: 'Access denied' },
         { status: 403 }

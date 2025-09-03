@@ -27,6 +27,7 @@
     "@types/papaparse": "^5.3.16",
     "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.7",
+    "encoding-japanese": "^2.2.0",
     "joi": "^18.0.1",
     "jose": "^6.0.13",
     "multer": "^2.0.2",
@@ -40,6 +41,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/encoding-japanese": "^2.2.1",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20.19.11",
     "@types/react": "^19",

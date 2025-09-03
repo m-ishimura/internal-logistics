@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
         email: user.email,
         name: user.name,
         role: user.role,
+        departmentId: user.departmentId,
         department: user.department
       }
     })
