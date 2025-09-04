@@ -43,6 +43,9 @@
       "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\shipments/**)",
       "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\shipments/**)",
       "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\shipments/**)",
+      "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\shipments/**)",
+      "mcp__serena__check_onboarding_performed",
+      "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\dashboard/**)",
       "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\shipments/**)"
     ],
     "deny": [],

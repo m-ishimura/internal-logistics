@@ -422,8 +422,8 @@ export default function ShipmentsPage() {
                   <div className="text-sm font-semibold text-gray-800">発送先</div>
                   <div className="text-sm font-semibold text-gray-800">担当者</div>
                   <div className="text-sm font-semibold text-gray-800">発送者</div>
-                  <div className="text-sm font-semibold text-gray-800">メモ</div>
                   {user.role === 'MANAGEMENT_USER' && <div className="text-sm font-semibold text-gray-800">発送元部署</div>}
+                  <div className="text-sm font-semibold text-gray-800">メモ</div>
                   <div className="text-sm font-semibold text-gray-800">操作</div>
                 </div>
                 
@@ -452,6 +452,11 @@ export default function ShipmentsPage() {
                       <div className="text-sm text-gray-600">
                         {shipment.sender?.name}
                       </div>
+                      {user.role === 'MANAGEMENT_USER' && (
+                        <div className="text-sm text-gray-600">
+                          {shipment.shipmentDepartment?.name}
+                        </div>
+                      )}
                       <div className="text-sm text-gray-600">
                         {shipment.notes ? (
                           <span className="truncate" title={shipment.notes}>
@@ -461,11 +466,6 @@ export default function ShipmentsPage() {
                           <span className="text-gray-400">-</span>
                         )}
                       </div>
-                      {user.role === 'MANAGEMENT_USER' && (
-                        <div className="text-sm text-gray-600">
-                          {shipment.shipmentDepartment?.name}
-                        </div>
-                      )}
                       <div className="flex gap-1 flex-nowrap">
                         {(() => {
                           const today = new Date()
