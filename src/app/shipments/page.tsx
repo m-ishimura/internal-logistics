@@ -479,16 +479,16 @@ export default function ShipmentsPage() {
                               {isShippedPastOrToday ? (
                                 <Button 
                                   variant="secondary" 
-                                  size="xs" 
+                                  size="sm" 
                                   disabled
                                   title="発送済みまたは当日発送分は編集できません"
-                                  className="px-2 py-1 text-xs whitespace-nowrap"
+                                  className="px-2 py-1 text-xs whitespace-nowrap h-6 min-w-0"
                                 >
                                   編集
                                 </Button>
                               ) : (
                                 <Link href={`/shipments/${shipment.id}/edit`}>
-                                  <Button variant="secondary" size="xs" className="px-2 py-1 text-xs whitespace-nowrap">
+                                  <Button variant="secondary" size="sm" className="px-2 py-1 text-xs whitespace-nowrap h-6 min-w-0">
                                     編集
                                   </Button>
                                 </Link>
@@ -497,21 +497,21 @@ export default function ShipmentsPage() {
                               {isShippedPastOrToday ? (
                                 <Button 
                                   variant="error" 
-                                  size="xs" 
+                                  size="sm" 
                                   disabled
                                   title="発送済みまたは当日発送分は削除できません"
-                                  className="px-2 py-1 text-xs whitespace-nowrap"
+                                  className="px-2 py-1 text-xs whitespace-nowrap h-6 min-w-0"
                                 >
                                   削除
                                 </Button>
                               ) : (
                                 <Button 
                                   variant="error" 
-                                  size="xs"
+                                  size="sm"
                                   loading={deleteLoading === shipment.id}
                                   disabled={deleteLoading === shipment.id}
                                   onClick={() => handleDelete(shipment.id, shipment.item?.name || '')}
-                                  className="px-2 py-1 text-xs whitespace-nowrap"
+                                  className="px-2 py-1 text-xs whitespace-nowrap h-6 min-w-0"
                                 >
                                   削除
                                 </Button>
