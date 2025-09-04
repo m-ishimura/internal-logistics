@@ -415,7 +415,12 @@ export default function ShipmentsPage() {
             <div>
               <div className="overflow-x-auto shadow-sm rounded-lg border border-gray-200 bg-white" style={{ padding: '2rem', minWidth: '800px' }}>
                   {/* ヘッダー */}
-                  <div className={`grid grid-cols-1 sm:grid-cols-4 ${user.role === 'MANAGEMENT_USER' ? 'lg:grid-cols-9' : 'lg:grid-cols-8'} gap-2 px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-300 rounded-lg w-full`} style={{ minWidth: '800px' }}>
+                  <div className={`grid grid-cols-1 sm:grid-cols-4 ${user.role === 'MANAGEMENT_USER' ? 'lg:grid-cols-9' : 'lg:grid-cols-8'} gap-2 px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-300 rounded-lg w-full`} style={{ 
+                    minWidth: '800px',
+                    gridTemplateColumns: user.role === 'MANAGEMENT_USER' 
+                      ? '100px 2fr 80px 2fr 0.7fr 0.7fr 1fr 200px 120px'
+                      : '100px 2fr 80px 2fr 0.7fr 0.7fr 200px 120px'
+                  }}>
                   <div className="text-sm font-semibold text-gray-800">発送日</div>
                   <div className="text-sm font-semibold text-gray-800">備品名</div>
                   <div className="text-sm font-semibold text-gray-800">数量</div>
@@ -430,7 +435,11 @@ export default function ShipmentsPage() {
                 {/* データ行 */}
                 {shipments.map((shipment) => (
                   <div key={shipment.id} className="flex items-center justify-between px-6 py-2 mt-1 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors w-full" style={{ minWidth: '800px' }}>
-                    <div className={`flex-1 grid grid-cols-1 sm:grid-cols-4 ${user.role === 'MANAGEMENT_USER' ? 'lg:grid-cols-9' : 'lg:grid-cols-8'} gap-2 items-center`}>
+                    <div className={`flex-1 grid grid-cols-1 sm:grid-cols-4 ${user.role === 'MANAGEMENT_USER' ? 'lg:grid-cols-9' : 'lg:grid-cols-8'} gap-2 items-center`} style={{
+                      gridTemplateColumns: user.role === 'MANAGEMENT_USER' 
+                        ? '100px 2fr 80px 2fr 0.7fr 0.7fr 1fr 200px 120px'
+                        : '100px 2fr 80px 2fr 0.7fr 0.7fr 200px 120px'
+                    }}>
                       <div className="text-sm text-gray-700">
                         {shipment.shippedAt 
                           ? new Date(shipment.shippedAt).toLocaleDateString('ja-JP')
@@ -457,10 +466,20 @@ export default function ShipmentsPage() {
                           {shipment.shipmentDepartment?.name}
                         </div>
                       )}
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-gray-600" style={{ 
+                        maxWidth: '200px', 
+                        overflow: 'hidden', 
+                        wordBreak: 'break-all',
+                        lineHeight: '1.2'
+                      }}>
                         {shipment.notes ? (
-                          <span className="truncate" title={shipment.notes}>
-                            {shipment.notes.length > 20 ? `${shipment.notes.substring(0, 20)}...` : shipment.notes}
+                          <span title={shipment.notes} style={{
+                            display: 'block',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            {shipment.notes.length > 25 ? `${shipment.notes.substring(0, 25)}...` : shipment.notes}
                           </span>
                         ) : (
                           <span className="text-gray-400">-</span>
