@@ -429,7 +429,7 @@ export default function ShipmentsPage() {
                 
                 {/* データ行 */}
                 {shipments.map((shipment) => (
-                  <div key={shipment.id} className="flex items-center justify-between px-6 py-4 mt-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors w-full" style={{ minWidth: '800px' }}>
+                  <div key={shipment.id} className="flex items-center justify-between px-6 py-2 mt-1 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors w-full" style={{ minWidth: '800px' }}>
                     <div className={`flex-1 grid grid-cols-1 sm:grid-cols-4 ${user.role === 'MANAGEMENT_USER' ? 'lg:grid-cols-9' : 'lg:grid-cols-8'} gap-2 items-center`}>
                       <div className="text-sm text-gray-700">
                         {shipment.shippedAt 
@@ -466,7 +466,7 @@ export default function ShipmentsPage() {
                           {shipment.shipmentDepartment?.name}
                         </div>
                       )}
-                      <div className="flex gap-2">
+                      <div className="flex gap-1 flex-nowrap">
                         {(() => {
                           const today = new Date()
                           today.setHours(0, 0, 0, 0) // 今日の00:00:00に設定
@@ -479,15 +479,16 @@ export default function ShipmentsPage() {
                               {isShippedPastOrToday ? (
                                 <Button 
                                   variant="secondary" 
-                                  size="sm" 
+                                  size="xs" 
                                   disabled
                                   title="発送済みまたは当日発送分は編集できません"
+                                  className="px-2 py-1 text-xs whitespace-nowrap"
                                 >
                                   編集
                                 </Button>
                               ) : (
                                 <Link href={`/shipments/${shipment.id}/edit`}>
-                                  <Button variant="secondary" size="sm">
+                                  <Button variant="secondary" size="xs" className="px-2 py-1 text-xs whitespace-nowrap">
                                     編集
                                   </Button>
                                 </Link>
@@ -496,19 +497,21 @@ export default function ShipmentsPage() {
                               {isShippedPastOrToday ? (
                                 <Button 
                                   variant="error" 
-                                  size="sm" 
+                                  size="xs" 
                                   disabled
                                   title="発送済みまたは当日発送分は削除できません"
+                                  className="px-2 py-1 text-xs whitespace-nowrap"
                                 >
                                   削除
                                 </Button>
                               ) : (
                                 <Button 
                                   variant="error" 
-                                  size="sm"
+                                  size="xs"
                                   loading={deleteLoading === shipment.id}
                                   disabled={deleteLoading === shipment.id}
                                   onClick={() => handleDelete(shipment.id, shipment.item?.name || '')}
+                                  className="px-2 py-1 text-xs whitespace-nowrap"
                                 >
                                   削除
                                 </Button>
