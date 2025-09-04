@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getUserFromHeaders } from '@/lib/auth'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ departmentId: string }> }
 ) {
   try {
-    const userRole = request.headers.get('x-user-role')
+    // Get user data from DB using JWT userId in headers
+    const user = await getUserFromHeaders(request)
     
-    if (!userRole) {
+    if (!user) {
       return NextResponse.json(
-        { success: false, error: 'Access denied' },
-        { status: 403 }
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
       )
     }
 

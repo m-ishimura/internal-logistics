@@ -30,7 +30,7 @@ export default function EditShipmentPage() {
   const [filteredUsers, setFilteredUsers] = useState<User[]>([])
   const [userSearchTerm, setUserSearchTerm] = useState('')
   const [showUserDropdown, setShowUserDropdown] = useState(false)
-  const [, setShipment] = useState<Shipment | null>(null)
+  const [shipment, setShipment] = useState<Shipment | null>(null)
   const [formData, setFormData] = useState({
     itemId: '',
     quantity: '',
@@ -314,21 +314,49 @@ export default function EditShipmentPage() {
                   help="追跡番号がある場合は入力してください"
                 />
 
-                <Select
-                  id="shipmentDepartmentId"
-                  label="発送元部署"
-                  value={formData.shipmentDepartmentId}
-                  onChange={(e) => handleChange('shipmentDepartmentId', e.target.value)}
-                  required
-                  help="発送元の部署を選択してください"
-                >
-                  <option value="">部署を選択してください</option>
-                  {departments.map((dept) => (
-                    <option key={dept.id} value={dept.id}>
-                      {dept.name} {dept.code && `(${dept.code})`}
-                    </option>
-                  ))}
-                </Select>
+                {/* 発送元部署選択 - ロールによる条件分岐 */}
+                {user?.role === 'MANAGEMENT_USER' ? (
+                  <Select
+                    id="shipmentDepartmentId"
+                    label="発送元部署"
+                    value={formData.shipmentDepartmentId}
+                    onChange={(e) => handleChange('shipmentDepartmentId', e.target.value)}
+                    required
+                    help="発送元の部署を選択してください"
+                  >
+                    <option value="">部署を選択してください</option>
+                    {departments.map((dept) => (
+                      <option key={dept.id} value={dept.id}>
+                        {dept.name} {dept.code && `(${dept.code})`}
+                      </option>
+                    ))}
+                  </Select>
+                ) : (
+                  <div className="form-group">
+                    <label className="form-label">発送元部署</label>
+                    <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                      <span className="text-gray-900 font-medium">
+                        {departments.find(dept => dept.id.toString() === formData.shipmentDepartmentId)?.name || '部署情報を取得中...'}
+                      </span>
+                      <p className="text-sm text-gray-600 mt-1">
+                        発送元部署は変更できません
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* 発送者表示 - 全ユーザー共通で既存の発送者情報を表示 */}
+                <div className="form-group">
+                  <label className="form-label">発送者</label>
+                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                    <span className="text-gray-900 font-medium">
+                      {shipment?.sender?.name || '発送者情報を読み込み中...'}
+                    </span>
+                    <p className="text-sm text-gray-600 mt-1">
+                      発送者は変更できません
+                    </p>
+                  </div>
+                </div>
 
                 <Select
                   id="destinationDepartmentId"

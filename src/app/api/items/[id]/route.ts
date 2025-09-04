@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { itemSchema } from '@/lib/validation'
+import { getUserFromHeaders } from '@/lib/auth'
 
 export async function GET(
   request: NextRequest,
@@ -8,8 +9,16 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const userRole = request.headers.get('x-user-role')
-    const departmentId = request.headers.get('x-department-id')
+    
+    // Get user data from DB using JWT userId in headers
+    const user = await getUserFromHeaders(request)
+    
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
 
     const item = await prisma.item.findUnique({
       where: { id },
@@ -30,7 +39,7 @@ export async function GET(
 
     // Department users can only view their own department's items
     // Management users can view all departments' items
-    if (userRole === 'DEPARTMENT_USER' && item.departmentId !== parseInt(departmentId || '0')) {
+    if (user.role === 'DEPARTMENT_USER' && item.departmentId !== user.departmentId) {
       return NextResponse.json(
         { success: false, error: 'Access denied' },
         { status: 403 }
@@ -56,7 +65,16 @@ export async function PUT(
 ) {
   try {
     const { id } = await params
-    const departmentId = request.headers.get('x-department-id')
+    
+    // Get user data from DB using JWT userId in headers
+    const user = await getUserFromHeaders(request)
+    
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
 
     // Check if item exists
     const existingItem = await prisma.item.findUnique({
@@ -70,8 +88,9 @@ export async function PUT(
       )
     }
 
-    // All users can only edit their own department's items
-    if (existingItem.departmentId !== parseInt(departmentId || '0')) {
+    // Department users can only edit their own department's items
+    // Management users can edit all departments' items
+    if (user.role === 'DEPARTMENT_USER' && existingItem.departmentId !== user.departmentId) {
       return NextResponse.json(
         { success: false, error: 'Access denied' },
         { status: 403 }
@@ -88,8 +107,9 @@ export async function PUT(
       )
     }
 
-    // All users can only assign items to their own department
-    if (value.departmentId !== parseInt(departmentId || '0')) {
+    // Department users can only assign items to their own department
+    // Management users can assign items to any department
+    if (user.role === 'DEPARTMENT_USER' && value.departmentId !== user.departmentId) {
       return NextResponse.json(
         { success: false, error: 'Access denied - can only assign items to your department' },
         { status: 403 }
@@ -123,7 +143,16 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-    const departmentId = request.headers.get('x-department-id')
+    
+    // Get user data from DB using JWT userId in headers
+    const user = await getUserFromHeaders(request)
+    
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
 
     // Check if item exists
     const existingItem = await prisma.item.findUnique({
@@ -142,8 +171,9 @@ export async function DELETE(
       )
     }
 
-    // All users can only delete their own department's items
-    if (existingItem.departmentId !== parseInt(departmentId || '0')) {
+    // Department users can only delete their own department's items
+    // Management users can delete all departments' items
+    if (user.role === 'DEPARTMENT_USER' && existingItem.departmentId !== user.departmentId) {
       return NextResponse.json(
         { success: false, error: 'Access denied' },
         { status: 403 }

@@ -1,15 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { shipmentSchema } from '@/lib/validation'
+import { getUserFromHeaders } from '@/lib/auth'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // const userId = request.headers.get('x-user-id')
-    const userRole = request.headers.get('x-user-role')
-    const departmentId = request.headers.get('x-department-id')
+    // Get user data from DB using JWT userId in headers
+    const user = await getUserFromHeaders(request)
+    
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
     const resolvedParams = await params
     const shipmentId = resolvedParams.id
 
@@ -23,8 +30,8 @@ export async function GET(
     const where: Record<string, any> = { id: shipmentId }
 
     // Department users can only access their own department's shipments
-    if (userRole === 'DEPARTMENT_USER') {
-      where.shipmentDepartmentId = parseInt(departmentId!)
+    if (user.role === 'DEPARTMENT_USER') {
+      where.shipmentDepartmentId = user.departmentId
     }
 
     const shipment = await prisma.shipment.findFirst({
@@ -73,9 +80,15 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const userId = request.headers.get('x-user-id')!
-    const userRole = request.headers.get('x-user-role')
-    const departmentId = request.headers.get('x-department-id')!
+    // Get user data from DB using JWT userId in headers
+    const user = await getUserFromHeaders(request)
+    
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
     const resolvedParams = await params
     const shipmentId = resolvedParams.id
 
@@ -98,8 +111,8 @@ export async function PUT(
 
     // Check if shipment exists and user has access
     const where: Record<string, any> = { id: shipmentId }
-    if (userRole === 'DEPARTMENT_USER') {
-      where.shipmentDepartmentId = parseInt(departmentId!)
+    if (user.role === 'DEPARTMENT_USER') {
+      where.shipmentDepartmentId = user.departmentId
     }
 
     const existingShipment = await prisma.shipment.findFirst({
@@ -115,12 +128,12 @@ export async function PUT(
     }
 
     // Verify the new item belongs to the user's department (for department users)
-    if (userRole === 'DEPARTMENT_USER' && value.itemId !== existingShipment.itemId) {
+    if (user.role === 'DEPARTMENT_USER' && value.itemId !== existingShipment.itemId) {
       const item = await prisma.item.findUnique({
         where: { id: value.itemId }
       })
 
-      if (!item || item.departmentId !== parseInt(departmentId!)) {
+      if (!item || item.departmentId !== user.departmentId) {
         return NextResponse.json(
           { success: false, error: 'Item not found or access denied' },
           { status: 403 }
@@ -132,7 +145,7 @@ export async function PUT(
       where: { id: shipmentId },
       data: {
         ...value,
-        updatedBy: parseInt(userId!)
+        updatedBy: user.id
       },
       include: {
         item: true,
@@ -171,9 +184,15 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // const userId = request.headers.get('x-user-id')
-    const userRole = request.headers.get('x-user-role')
-    const departmentId = request.headers.get('x-department-id')
+    // Get user data from DB using JWT userId in headers
+    const user = await getUserFromHeaders(request)
+    
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
     const resolvedParams = await params
     const shipmentId = resolvedParams.id
 
@@ -186,8 +205,8 @@ export async function DELETE(
 
     // Check if shipment exists and user has access
     const where: Record<string, any> = { id: shipmentId }
-    if (userRole === 'DEPARTMENT_USER') {
-      where.shipmentDepartmentId = parseInt(departmentId!)
+    if (user.role === 'DEPARTMENT_USER') {
+      where.shipmentDepartmentId = user.departmentId
     }
 
     const existingShipment = await prisma.shipment.findFirst({

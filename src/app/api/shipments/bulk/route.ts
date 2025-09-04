@@ -3,11 +3,19 @@ import { prisma } from '@/lib/prisma'
 import * as XLSX from 'xlsx'
 import * as Papa from 'papaparse'
 import Encoding from 'encoding-japanese'
+import { getUserFromHeaders } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id')!
-    const departmentId = request.headers.get('x-department-id')!
+    // Get user data from DB using JWT userId in headers
+    const user = await getUserFromHeaders(request)
+    
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
 
     const formData = await request.formData()
     const file = formData.get('file') as File
@@ -78,7 +86,7 @@ export async function POST(request: NextRequest) {
         totalRecords: data.length,
         successRecords: 0,
         errorRecords: 0,
-        uploadedBy: parseInt(userId),
+        uploadedBy: user.id,
         status: 'PROCESSING'
       }
     })
@@ -97,6 +105,7 @@ export async function POST(request: NextRequest) {
         item: any
         quantity: number
         destinationDepartment: any
+        shipmentDepartment: any  // 新しく追加
         shipmentUserId: number | null
         shippedAt: Date | undefined
         trackingNumber: string | undefined
@@ -116,10 +125,12 @@ export async function POST(request: NextRequest) {
         }
 
         // Find item by name
+        // Department users can only use items from their own department
+        // Management users can use items from any department
         const item = await prisma.item.findFirst({
           where: {
             name: row.item_name.toString().trim(),
-            departmentId: parseInt(departmentId) // Only items from user's department
+            ...(user.role === 'DEPARTMENT_USER' && { departmentId: user.departmentId })
           }
         })
 
@@ -141,6 +152,32 @@ export async function POST(request: NextRequest) {
 
         if (!destinationDepartment) {
           throw new Error(`宛先部署「${row.destination_department_name}」が見つかりません`)
+        }
+
+        // Find shipment department by name (新機能 - MANAGEMENT_USERのみ)
+        let shipmentDepartment = null
+        if (row.shipment_department_name && row.shipment_department_name.toString().trim()) {
+          // MANAGEMENT_USERのみ発送元部署を指定可能
+          if (user.role !== 'MANAGEMENT_USER') {
+            throw new Error('一般ユーザーは発送元部署を指定できません')
+          }
+          
+          shipmentDepartment = await prisma.department.findFirst({
+            where: {
+              name: row.shipment_department_name.toString().trim()
+            }
+          })
+
+          if (!shipmentDepartment) {
+            throw new Error(`発送元部署「${row.shipment_department_name}」が見つかりません`)
+          }
+        } else {
+          // 従来通りの動作：ログインユーザーの部署を使用
+          shipmentDepartment = await prisma.department.findFirst({
+            where: {
+              id: user.departmentId
+            }
+          })
         }
 
         // Find shipment user by name if provided
@@ -177,6 +214,7 @@ export async function POST(request: NextRequest) {
             item,
             quantity,
             destinationDepartment,
+            shipmentDepartment,  // 新しく追加
             shipmentUserId,
             shippedAt,
             trackingNumber: row.tracking_number ? row.tracking_number.toString().trim() : undefined,
@@ -237,15 +275,16 @@ export async function POST(request: NextRequest) {
             data: {
               itemId: parsedData.item.id,
               quantity: parsedData.quantity,
-              senderId: parseInt(userId),
-              shipmentDepartmentId: parseInt(departmentId),
+              senderId: user.id,
+              // 新機能：MANAGEMENT_USERが指定した場合はその部署、そうでなければユーザーの部署
+              shipmentDepartmentId: parsedData.shipmentDepartment.id,
               destinationDepartmentId: parsedData.destinationDepartment.id,
               shipmentUserId: parsedData.shipmentUserId,
               trackingNumber: parsedData.trackingNumber,
               notes: parsedData.notes,
               shippedAt: parsedData.shippedAt,
-              createdBy: parseInt(userId),
-              updatedBy: parseInt(userId)
+              createdBy: user.id,
+              updatedBy: user.id
             }
           })
           

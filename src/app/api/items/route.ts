@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url)
     const queryParams = Object.fromEntries(url.searchParams.entries())
     const forShipment = queryParams.forShipment === 'true' // 発送用フラグ
+    const departmentId = queryParams.departmentId ? parseInt(queryParams.departmentId) : null // 指定部署ID
     const { error, value } = paginationSchema.validate(queryParams)
     
     if (error) {
@@ -32,9 +33,13 @@ export async function GET(request: NextRequest) {
 
     const where: Record<string, any> = {}
 
-    // For shipment creation, all users (including management) can only see their own department's items
+    // For shipment creation: MANAGEMENT_USER can specify departmentId, others see own department only
     if (forShipment) {
-      where.departmentId = user.departmentId
+      if (user.role === 'MANAGEMENT_USER' && departmentId) {
+        where.departmentId = departmentId
+      } else {
+        where.departmentId = user.departmentId
+      }
     }
     // For item management, department users can only see their own department's items
     else if (user.role === 'DEPARTMENT_USER') {
@@ -95,15 +100,15 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    console.log('[DEBUG] API - user from DB:', { id: user.id, departmentId: user.departmentId })
+    console.log('[DEBUG] API - user from DB:', { id: user.id, departmentId: user.departmentId, role: user.role })
 
     const body = await request.json()
     console.log('[DEBUG] API - request body:', body)
     
-    // Automatically set departmentId from authenticated user's department
+    // For MANAGEMENT_USER: use requested departmentId, for DEPARTMENT_USER: force own department
     const requestData = {
       ...body,
-      departmentId: user.departmentId
+      departmentId: user.role === 'MANAGEMENT_USER' ? body.departmentId : user.departmentId
     }
     console.log('[DEBUG] API - data with departmentId:', requestData)
     
@@ -117,8 +122,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // All users can only create items for their own department
-    if (value.departmentId !== user.departmentId) {
+    // MANAGEMENT_USER can create items for any department, DEPARTMENT_USER only for own department
+    if (user.role === 'DEPARTMENT_USER' && value.departmentId !== user.departmentId) {
       return NextResponse.json(
         { success: false, error: 'Access denied - can only create items for your department' },
         { status: 403 }

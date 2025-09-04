@@ -43,6 +43,7 @@ export const paginationSchema = Joi.object({
   sortBy: Joi.string().max(50).optional(),
   sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
   forShipment: Joi.string().optional(),
+  departmentId: Joi.string().optional(), // 部署指定用パラメータ
   // フィルターパラメータを追加
   itemId: Joi.string().optional(),
   destination: Joi.string().optional(),

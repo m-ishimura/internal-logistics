@@ -128,15 +128,29 @@ export default function BulkShipmentPage() {
   }
 
   const downloadTemplate = () => {
-    const csvContent = 'item_name,quantity,destination_department_name,shipment_user_name,tracking_number,notes,shipped_at\n' +
-                      'オフィス用品セット,2,東京オフィス,田中太郎,123-456-789,急送,2024-01-15 14:30\n' +
-                      'A4用紙,10,大阪支社,,通常配送,'
+    let csvContent = ''
+    let fileName = ''
+    
+    if (user?.role === 'MANAGEMENT_USER') {
+      // 管理者用テンプレート：shipment_department_name列を含む
+      csvContent = 'item_name,quantity,destination_department_name,shipment_department_name,shipment_user_name,tracking_number,notes,shipped_at\n' +
+                   'オフィス用品セット,2,東京オフィス,IT部,田中太郎,123-456-789,急送,2024-01-15 14:30\n' +
+                   'A4用紙,10,大阪支社,,佐藤花子,通常配送,\n' +
+                   'ノートパソコン,1,営業部,IT部,,,緊急配送,2024-01-16'
+      fileName = 'shipment_template_management.csv'
+    } else {
+      // 一般ユーザー用テンプレート：従来通り
+      csvContent = 'item_name,quantity,destination_department_name,shipment_user_name,tracking_number,notes,shipped_at\n' +
+                   'オフィス用品セット,2,東京オフィス,田中太郎,123-456-789,急送,2024-01-15 14:30\n' +
+                   'A4用紙,10,大阪支社,,通常配送,'
+      fileName = 'shipment_template.csv'
+    }
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
     const url = URL.createObjectURL(blob)
     link.setAttribute('href', url)
-    link.setAttribute('download', 'shipment_template.csv')
+    link.setAttribute('download', fileName)
     link.style.visibility = 'hidden'
     document.body.appendChild(link)
     link.click()
@@ -249,9 +263,16 @@ export default function BulkShipmentPage() {
 
             <div className="bg-blue-50 p-4 rounded-md mb-4">
               <h4 className="font-medium text-blue-800 mb-1">発送元部署について</h4>
-              <p className="text-sm text-blue-700">
-                発送元部署は自動的にあなたの所属部署（{user?.department?.name}）に設定されます。CSVに発送元部署の列は不要です。
-              </p>
+              {user?.role === 'MANAGEMENT_USER' ? (
+                <p className="text-sm text-blue-700">
+                  管理者として、CSV の <code className="bg-blue-100 px-1 rounded">shipment_department_name</code> 列で発送元部署を指定できます。
+                  未指定の場合は自動的にあなたの所属部署（{user?.department?.name}）に設定されます。
+                </p>
+              ) : (
+                <p className="text-sm text-blue-700">
+                  発送元部署は自動的にあなたの所属部署（{user?.department?.name}）に設定されます。CSVに発送元部署の列は不要です。
+                </p>
+              )}
             </div>
             <div className="bg-yellow-50 p-4 rounded-md">
               <h4 className="font-medium text-yellow-800 mb-1">注意事項</h4>

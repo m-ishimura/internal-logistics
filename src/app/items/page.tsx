@@ -75,7 +75,11 @@ export default function ItemsPage() {
 
   // Helper function to check if user can edit an item
   const canEditItem = (item: Item) => {
-    // Convert both to numbers for comparison
+    // Management users can edit items from any department
+    if (user?.role === 'MANAGEMENT_USER') {
+      return true
+    }
+    // Department users can only edit items from their own department
     return Number(item.departmentId) === Number(user?.departmentId)
   }
 

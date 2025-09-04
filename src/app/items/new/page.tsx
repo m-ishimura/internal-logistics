@@ -6,19 +6,21 @@ import { useAuth } from '@/contexts/AuthContext'
 import { 
   Button, 
   Input, 
+  Select,
   Card, 
   CardHeader, 
   CardTitle, 
   CardContent,
   Alert
 } from '@/components/ui'
+import type { Department } from '@/types'
 
 export default function NewItemPage() {
   const { user } = useAuth()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  // Removed departments state as it's no longer needed
+  const [departments, setDepartments] = useState<Department[]>([])
   const [formData, setFormData] = useState({
     name: '',
     unit: '',
@@ -26,13 +28,28 @@ export default function NewItemPage() {
   })
 
   useEffect(() => {
+    if (user?.role === 'MANAGEMENT_USER') {
+      fetchDepartments()
+    }
     if (user) {
-      // Both DEPARTMENT_USER and MANAGEMENT_USER can only register items for their own department
       setFormData(prev => ({ ...prev, departmentId: user.departmentId }))
     }
   }, [user])
 
-  // Removed fetchDepartments function as departments are no longer selectable
+  const fetchDepartments = async () => {
+    try {
+      const response = await fetch('/api/departments?limit=1000&forShipment=true', {
+        credentials: 'include'
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setDepartments(data.data || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch departments:', err)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,10 +57,12 @@ export default function NewItemPage() {
     setError('')
 
     try {
-      // Ensure departmentId is set from user data
       const submitData = {
         ...formData,
-        departmentId: user?.departmentId || 0
+        // MANAGEMENT_USERはフォームの値、DEPARTMENT_USERは強制的に自部署
+        departmentId: user?.role === 'MANAGEMENT_USER' 
+          ? formData.departmentId 
+          : user?.departmentId || 0
       }
       
       console.log('[DEBUG] Form data being sent:', submitData)
@@ -122,14 +141,30 @@ export default function NewItemPage() {
               help="数量の単位を入力してください"
             />
 
-            {/* Department field is automatically set to user's department - no manual selection needed */}
-            {user && (
+            {/* 部署選択 - ロールによる条件分岐 */}
+            {user?.role === 'MANAGEMENT_USER' ? (
+              <Select
+                id="departmentId"
+                label="担当部署"
+                value={formData.departmentId.toString()}
+                onChange={(e) => handleChange('departmentId', parseInt(e.target.value))}
+                required
+                help="備品を登録する部署を選択してください"
+              >
+                <option value="">部署を選択してください</option>
+                {departments.map((dept) => (
+                  <option key={dept.id} value={dept.id}>
+                    {dept.name} {dept.code && `(${dept.code})`}
+                  </option>
+                ))}
+              </Select>
+            ) : (
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
                   担当部署
                 </label>
                 <div className="px-3 py-2 border border-gray-300 bg-gray-50 rounded-md text-gray-600">
-                  {user.department?.name || '未設定'}
+                  {user?.department?.name || '未設定'}
                 </div>
                 <p className="text-sm text-gray-500">
                   備品は自部署にのみ登録できます

@@ -25,6 +25,7 @@ export default function NewShipmentPage() {
   const [departments, setDepartments] = useState<Department[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [filteredUsers, setFilteredUsers] = useState<User[]>([])
+  // const [senders, setSenders] = useState<User[]>([]) // 発送者選択削除により不要
   const [userSearchTerm, setUserSearchTerm] = useState('')
   const [showUserDropdown, setShowUserDropdown] = useState(false)
   const [formData, setFormData] = useState({
@@ -40,28 +41,53 @@ export default function NewShipmentPage() {
   })
 
   useEffect(() => {
-    fetchItems()
     fetchDepartments()
     
-    // ログインユーザーの部署を発送元部署に自動設定
     if (user?.departmentId) {
       setFormData(prev => ({
         ...prev,
         shipmentDepartmentId: user.departmentId.toString(),
         senderId: user.id.toString()
       }))
+      
+      // 初期読み込み時の備品取得
+      if (user.role === 'MANAGEMENT_USER') {
+        // MANAGEMENT_USERの場合は所属部署を指定して取得
+        fetchItems(user.departmentId.toString())
+      } else {
+        // DEPARTMENT_USERの場合はパラメータなしで取得（APIで自動で自部署にフィルタリング）
+        fetchItems()
+      }
+      // fetchSendersByDepartment(user.departmentId.toString()) // 発送者選択削除により不要
     }
   }, [user])
 
-  const fetchItems = async () => {
+  const fetchItems = async (departmentId?: string) => {
     try {
-      const response = await fetch('/api/items?limit=1000&forShipment=true', {
+      let url = '/api/items?limit=1000&forShipment=true'
+      // MANAGEMENT_USERの場合のみ departmentId パラメータを追加
+      if (user?.role === 'MANAGEMENT_USER' && departmentId) {
+        url += `&departmentId=${departmentId}`
+      }
+      
+      console.log('[DEBUG] Fetching items from:', url)
+      
+      const response = await fetch(url, {
         credentials: 'include'
       })
       
       if (response.ok) {
         const data = await response.json()
-        setItems(data.data)
+        console.log('[DEBUG] Items fetched:', data.data)
+        setItems(data.data || [])
+      } else {
+        const errorData = await response.text()
+        console.error('Failed to fetch items - response not ok:', {
+          status: response.status,
+          statusText: response.statusText,
+          url: url,
+          error: errorData
+        })
       }
     } catch (err) {
       console.error('Failed to fetch items:', err)
@@ -147,6 +173,8 @@ export default function NewShipmentPage() {
     }
   }
 
+  // fetchSendersByDepartment削除 - 発送者選択機能削除により不要
+
   const filterUsers = (searchTerm: string) => {
     if (!searchTerm) {
       setFilteredUsers(users)
@@ -170,6 +198,19 @@ export default function NewShipmentPage() {
     setShowUserDropdown(false)
     
     await fetchUsersByDepartment(departmentId)
+  }
+
+  const handleShipmentDepartmentChange = async (departmentId: string) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      shipmentDepartmentId: departmentId,
+      senderId: user!.id.toString(), // 発送者は常にログインユーザー
+      itemId: '' // 部署変更時は備品選択をリセット
+    }))
+    
+    // 発送元部署変更時にその部署の備品を取得
+    await fetchItems(departmentId)
+    // await fetchSendersByDepartment(departmentId) // 発送者選択削除により不要
   }
 
   const handleChange = (field: string, value: string) => {
@@ -241,14 +282,46 @@ export default function NewShipmentPage() {
               help="追跡番号がある場合は入力してください"
             />
 
+            {/* 発送元部署選択 - ロールによる条件分岐 */}
+            {user?.role === 'MANAGEMENT_USER' ? (
+              <Select
+                id="shipmentDepartmentId"
+                label="発送元部署"
+                value={formData.shipmentDepartmentId}
+                onChange={(e) => handleShipmentDepartmentChange(e.target.value)}
+                required
+                help="発送元の部署を選択してください"
+              >
+                <option value="">部署を選択してください</option>
+                {departments.map((dept) => (
+                  <option key={dept.id} value={dept.id}>
+                    {dept.name} {dept.code && `(${dept.code})`}
+                  </option>
+                ))}
+              </Select>
+            ) : (
+              <div className="form-group">
+                <label className="form-label">発送元部署</label>
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <span className="text-gray-900 font-medium">
+                    {user?.department?.name || '部署情報を取得中...'}
+                  </span>
+                  <p className="text-sm text-gray-600 mt-1">
+                    発送元部署は自動的にあなたの所属部署に設定されます
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* 発送者表示 - 全ユーザー共通でログインユーザーに固定 */}
             <div className="form-group">
-              <label className="form-label">発送元部署</label>
+              <label className="form-label">発送者</label>
               <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
                 <span className="text-gray-900 font-medium">
-                  {user?.department?.name || '部署情報を取得中...'}
+                  {user?.name || 'ユーザー情報を取得中...'}
                 </span>
                 <p className="text-sm text-gray-600 mt-1">
-                  発送元部署は自動的にあなたの所属部署に設定されます
+                  発送者は自動的にあなたに設定されます
                 </p>
               </div>
             </div>

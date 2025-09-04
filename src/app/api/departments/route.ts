@@ -1,16 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { departmentSchema, paginationSchema } from '@/lib/validation'
+import { getUserFromHeaders } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
-    const userRole = request.headers.get('x-user-role')
+    // Get user data from DB using JWT userId in headers
+    const user = await getUserFromHeaders(request)
+    
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
     const url = new URL(request.url)
     const queryParams = Object.fromEntries(url.searchParams.entries())
     const forShipment = queryParams.forShipment === 'true' // 発送用フラグ
     
     // 発送用の場合は全ユーザーがアクセス可能、それ以外は管理者のみ
-    if (!forShipment && userRole !== 'MANAGEMENT_USER') {
+    if (!forShipment && user.role !== 'MANAGEMENT_USER') {
       return NextResponse.json(
         { success: false, error: 'Access denied' },
         { status: 403 }
@@ -89,9 +99,17 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const userRole = request.headers.get('x-user-role')
+    // Get user data from DB using JWT userId in headers
+    const user = await getUserFromHeaders(request)
     
-    if (userRole !== 'MANAGEMENT_USER') {
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+    
+    if (user.role !== 'MANAGEMENT_USER') {
       return NextResponse.json(
         { success: false, error: 'Access denied' },
         { status: 403 }
