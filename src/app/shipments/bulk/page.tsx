@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { 
@@ -17,7 +17,7 @@ import {
   TableHead,
   TableCell
 } from '@/components/ui'
-import type { BulkImport, BulkImportError } from '@/types'
+import type { BulkImport, BulkImportError, Department, Item } from '@/types'
 
 export default function BulkShipmentPage() {
   const { user } = useAuth()
@@ -29,6 +29,50 @@ export default function BulkShipmentPage() {
   const [uploadResult, setUploadResult] = useState<BulkImport | null>(null)
   const [errors, setErrors] = useState<BulkImportError[]>([])
   const [dragActive, setDragActive] = useState(false)
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [items, setItems] = useState<Item[]>([])
+  const [departmentSearch, setDepartmentSearch] = useState('')
+  const [itemSearch, setItemSearch] = useState('')
+
+  // 部署一覧を取得
+  const fetchDepartments = async () => {
+    try {
+      const response = await fetch('/api/departments?forShipment=true&limit=1000&sortBy=id&sortOrder=asc', {
+        credentials: 'include'
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setDepartments(data.data || [])
+      }
+    } catch (err) {
+      // エラーは無視
+    }
+  }
+
+  // 備品一覧を取得（権限に応じて）
+  const fetchItems = async () => {
+    try {
+      const response = await fetch('/api/items?limit=1000', {
+        credentials: 'include'
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setItems(data.data || [])
+      }
+    } catch (err) {
+      // エラーは無視
+    }
+  }
+
+  // 初回データ取得
+  useEffect(() => {
+    if (user) {
+      fetchDepartments()
+      fetchItems()
+    }
+  }, [user])
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
@@ -157,12 +201,31 @@ export default function BulkShipmentPage() {
     document.body.removeChild(link)
   }
 
+  // フィルタリング用のヘルパー関数
+  const filteredDepartments = departments.filter(dept =>
+    dept.name.toLowerCase().includes(departmentSearch.toLowerCase())
+  )
+
+  const filteredItems = items.filter(item =>
+    item.name.toLowerCase().includes(itemSearch.toLowerCase())
+  )
+
+  // 名前をクリップボードにコピー
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      // 短時間の視覚フィードバック（オプション）
+    }).catch(() => {
+      // フォールバック
+    })
+  }
+
   if (!user) return null
 
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="flex-1 flex items-start justify-center px-4 py-8">
-        <div className="w-full max-w-4xl space-y-6">
+      <div className="flex-1 flex items-start px-4 py-8 gap-6">
+        {/* メインコンテンツ */}
+        <div className="flex-1 space-y-6">
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900">一括発送登録</h1>
             <p className="mt-2 text-gray-600">
@@ -358,6 +421,101 @@ export default function BulkShipmentPage() {
           </CardContent>
         </Card>
       )}
+        </div>
+
+        {/* サイドパネル */}
+        <div className="w-80 space-y-4 hidden lg:block">
+          {/* 部署一覧 */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">部署一覧</CardTitle>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="部署名で検索..."
+                  value={departmentSearch}
+                  onChange={(e) => setDepartmentSearch(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="max-h-48 overflow-y-auto space-y-1">
+                {filteredDepartments.map((dept) => (
+                  <div
+                    key={dept.id}
+                    onClick={() => copyToClipboard(dept.name)}
+                    className="px-3 py-2 hover:bg-gray-100 rounded-md cursor-pointer transition-colors group"
+                    title="クリックでコピー"
+                  >
+                    <div className="text-sm font-medium text-gray-900 group-hover:text-blue-600">
+                      {dept.name}
+                    </div>
+                  </div>
+                ))}
+                {filteredDepartments.length === 0 && (
+                  <div className="text-sm text-gray-500 text-center py-4">
+                    該当する部署がありません
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 備品一覧 */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">
+                備品一覧
+                {user?.role === 'DEPARTMENT_USER' && (
+                  <span className="text-sm text-gray-500 font-normal ml-2">
+                    （{user.department?.name}）
+                  </span>
+                )}
+              </CardTitle>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="備品名で検索..."
+                  value={itemSearch}
+                  onChange={(e) => setItemSearch(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="max-h-64 overflow-y-auto space-y-1">
+                {filteredItems.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => copyToClipboard(item.name)}
+                    className="px-3 py-2 hover:bg-gray-100 rounded-md cursor-pointer transition-colors group"
+                    title="クリックでコピー"
+                  >
+                    <div className="text-sm font-medium text-gray-900 group-hover:text-blue-600">
+                      {item.name}
+                    </div>
+                  </div>
+                ))}
+                {filteredItems.length === 0 && (
+                  <div className="text-sm text-gray-500 text-center py-4">
+                    該当する備品がありません
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 使用方法 */}
+          <Card>
+            <CardContent className="pt-4">
+              <div className="text-xs text-gray-600">
+                <p className="font-medium mb-2">💡 使用方法</p>
+                <p className="mb-1">• 部署名や備品名をクリックするとコピーされます</p>
+                <p>• CSVテンプレート作成時にご活用ください</p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
