@@ -14,6 +14,7 @@ import {
   Alert
 } from '@/components/ui'
 import type { Shipment, PaginatedResponse, Item, Department } from '@/types'
+import { isShipmentLocked, getShipmentLockMessage } from '@/lib/shipment-utils'
 
 export default function ShipmentsPage() {
   const { user } = useAuth()
@@ -213,7 +214,13 @@ export default function ShipmentsPage() {
     return dept?.name || `部署ID: ${departmentId}`
   })
 
-  const handleDelete = async (shipmentId: string, itemName: string) => {
+  const handleDelete = async (shipmentId: string, itemName: string, shipment: Shipment) => {
+    // 発送済み（過去日）の場合は削除不可
+    if (isShipmentLocked(shipment.shippedAt ?? null)) {
+      setError(getShipmentLockMessage('delete'))
+      return
+    }
+
     if (!confirm(`「${itemName}」の発送を削除しますか？この操作は元に戻せません。`)) {
       return
     }
@@ -528,21 +535,30 @@ export default function ShipmentsPage() {
                           (() => {
                             const shipmentIdString = String(shipment.id)
                             const position = dropdownPositions[shipmentIdString] || 'bottom'
+                            const isLocked = isShipmentLocked(shipment.shippedAt ?? null)
                             return (
                               <div className={`absolute ${position === 'top' ? 'bottom-8' : 'top-8'} right-0 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50 w-24`}>
-                                <Link
-                                  href={`/shipments/${shipment.id}/edit`}
-                                  className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                                >
-                                  編集
-                                </Link>
-                                <button
-                                  onClick={() => handleDelete(String(shipment.id), shipment.item?.name || '不明')}
-                                  disabled={deleteLoading === String(shipment.id)}
-                                  className="w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 text-left flex items-center disabled:opacity-50"
-                                >
-                                  {deleteLoading === String(shipment.id) ? '削除中...' : '削除'}
-                                </button>
+                                {isLocked ? (
+                                  <div className="w-full px-4 py-2 text-xs text-gray-400 cursor-not-allowed">
+                                    編集不可
+                                  </div>
+                                ) : (
+                                  <>
+                                    <Link
+                                      href={`/shipments/${shipment.id}/edit`}
+                                      className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                                    >
+                                      編集
+                                    </Link>
+                                    <button
+                                      onClick={() => handleDelete(String(shipment.id), shipment.item?.name || '不明', shipment)}
+                                      disabled={deleteLoading === String(shipment.id)}
+                                      className="w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 text-left flex items-center disabled:opacity-50"
+                                    >
+                                      {deleteLoading === String(shipment.id) ? '削除中...' : '削除'}
+                                    </button>
+                                  </>
+                                )}
                               </div>
                             )
                           })()

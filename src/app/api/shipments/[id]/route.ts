@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { shipmentSchema } from '@/lib/validation'
 import { getUserFromHeaders } from '@/lib/auth'
+import { isShipmentLocked, getShipmentLockMessage } from '@/lib/shipment-utils'
 
 export async function GET(
   request: NextRequest,
@@ -127,6 +128,14 @@ export async function PUT(
       )
     }
 
+    // Check if shipment is locked (shipped)
+    if (isShipmentLocked(existingShipment.shippedAt)) {
+      return NextResponse.json(
+        { success: false, error: getShipmentLockMessage('edit') },
+        { status: 403 }
+      )
+    }
+
     // Verify the new item belongs to the user's department (for department users)
     if (user.role === 'DEPARTMENT_USER' && value.itemId !== existingShipment.itemId) {
       const item = await prisma.item.findUnique({
@@ -217,6 +226,14 @@ export async function DELETE(
       return NextResponse.json(
         { success: false, error: 'Shipment not found or access denied' },
         { status: 404 }
+      )
+    }
+
+    // Check if shipment is locked (shipped)
+    if (isShipmentLocked(existingShipment.shippedAt)) {
+      return NextResponse.json(
+        { success: false, error: getShipmentLockMessage('delete') },
+        { status: 403 }
       )
     }
 

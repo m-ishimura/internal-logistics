@@ -14,6 +14,7 @@ import {
   Alert
 } from '@/components/ui'
 import type { Item, Department, Shipment, User } from '@/types'
+import { isShipmentLocked, getShipmentLockMessage } from '@/lib/shipment-utils'
 
 export default function EditShipmentPage() {
   const { user } = useAuth()
@@ -69,7 +70,15 @@ export default function EditShipmentPage() {
       const data = await response.json()
       const shipment = data.data
       setShipment(shipment)
-      void shipment // Variable reserved for future validation logic
+      
+      // 発送日制限チェック - 発送済みの場合は編集不可
+      if (isShipmentLocked(shipment.shippedAt)) {
+        setError(getShipmentLockMessage('edit'))
+        setTimeout(() => {
+          router.push('/shipments')
+        }, 2000) // 2秒後に発送一覧に戻る
+        return
+      }
       
       // 既存データの場合
       setFormData({
