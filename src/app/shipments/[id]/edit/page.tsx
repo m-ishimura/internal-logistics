@@ -71,9 +71,7 @@ export default function EditShipmentPage() {
       setShipment(shipment)
       void shipment // Variable reserved for future validation logic
       
-      
       // 既存データの場合
-      
       setFormData({
         itemId: shipment.itemId.toString(),
         quantity: shipment.quantity.toString(),
@@ -85,6 +83,22 @@ export default function EditShipmentPage() {
         notes: shipment.notes || '',
         shippedAt: shipment.shippedAt ? new Date(shipment.shippedAt).toISOString().slice(0, 10) : ''
       })
+
+      // 一般ユーザーの場合、現在選択中の他部署備品を備品リストに追加（重複排除）
+      if (user?.role === 'DEPARTMENT_USER' && shipment.item) {
+        setItems(prevItems => {
+          // 既存の備品IDをSetで管理して重複チェック
+          const existingItemIds = new Set(prevItems.map(item => item.id))
+          
+          // 現在の備品が既に存在しない場合のみ追加
+          if (!existingItemIds.has(shipment.item.id)) {
+            return [...prevItems, shipment.item]
+          }
+          
+          // 既に存在する場合はそのまま返す
+          return prevItems
+        })
+      }
 
       // 発送先部署のユーザーを取得
       if (shipment.destinationDepartmentId) {
@@ -103,18 +117,30 @@ export default function EditShipmentPage() {
 
   const fetchItems = async () => {
     try {
-      // For edit form, get all items (not just forShipment=true)
-      // to ensure the current shipment's item is included
-      const response = await fetch('/api/items?limit=1000', {
-        credentials: 'include'
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        setItems(data.data)
+      if (user?.role === 'MANAGEMENT_USER') {
+        // 管理者: 全部署の備品を取得（従来通り）
+        const response = await fetch('/api/items?limit=1000', {
+          credentials: 'include'
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          setItems(data.data)
+        }
+      } else {
+        // 一般ユーザー: 自部署の備品のみ取得
+        const response = await fetch('/api/items?limit=1000', {
+          credentials: 'include'
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          const departmentItems = data.data
+          setItems(departmentItems)
+        }
       }
     } catch (err) {
-      console.error('Failed to fetch items:', err)
+      // エラーは無視
     }
   }
 

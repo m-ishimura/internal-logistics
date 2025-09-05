@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { 
@@ -25,6 +25,8 @@ export default function ShipmentsPage() {
   const [departments, setDepartments] = useState<Department[]>([])
   const [destinations, setDestinations] = useState<string[]>([])
   const [showFilters, setShowFilters] = useState(false)
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  const [dropdownPositions, setDropdownPositions] = useState<{[key: string]: 'top' | 'bottom'}>({})
   
   // フィルター状態
   const [filters, setFilters] = useState(() => {
@@ -91,7 +93,7 @@ export default function ShipmentsPage() {
         setItems(data.data)
       }
     } catch (err) {
-      console.error('Failed to fetch items:', err)
+      // エラーは無視
     }
   }
 
@@ -105,14 +107,14 @@ export default function ShipmentsPage() {
         setDepartments(data.data || [])
       }
     } catch (err) {
-      console.error('Failed to fetch departments:', err)
+      // エラーは無視
     }
   }
 
   const fetchDestinations = async () => {
     try {
-      // 部署一覧から発送先候補を取得
-      const response = await fetch('/api/departments', {
+      // 発送先フィルター用の部署一覧を取得（全ユーザーがアクセス可能）
+      const response = await fetch('/api/departments?forShipment=true', {
         credentials: 'include'
       })
       if (response.ok) {
@@ -121,7 +123,7 @@ export default function ShipmentsPage() {
         setDestinations(departmentNames)
       }
     } catch (err) {
-      console.error('Failed to fetch destinations:', err)
+      // エラーは無視
     }
   }
 
@@ -135,6 +137,40 @@ export default function ShipmentsPage() {
       }
     }
   }, [user])
+
+  // ドロップダウン外クリックで閉じる
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element
+      if (!target.closest('.dropdown-container')) {
+        setOpenDropdown(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const handleDropdownToggle = (event: React.MouseEvent, shipmentId: string) => {
+    const shipmentIdString = String(shipmentId)
+    const isCurrentlyOpen = openDropdown === shipmentIdString
+    
+    if (isCurrentlyOpen) {
+      setOpenDropdown(null)
+    } else {
+      // クリックされたボタンの位置を取得
+      const button = event.currentTarget as HTMLButtonElement
+      const rect = button.getBoundingClientRect()
+      const windowHeight = window.innerHeight
+      const dropdownHeight = 96 // ドロップダウンの実際の高さ
+      const margin = 20 // 余白
+      
+      const spaceBelow = windowHeight - rect.bottom - margin
+      const position = spaceBelow < dropdownHeight ? 'top' : 'bottom'
+      
+      setDropdownPositions(prev => ({ ...prev, [shipmentIdString]: position }))
+      setOpenDropdown(shipmentIdString)
+    }
+  }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -418,8 +454,8 @@ export default function ShipmentsPage() {
                   <div className={`grid grid-cols-1 sm:grid-cols-4 ${user.role === 'MANAGEMENT_USER' ? 'lg:grid-cols-9' : 'lg:grid-cols-8'} gap-2 px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-300 rounded-lg w-full`} style={{ 
                     minWidth: '800px',
                     gridTemplateColumns: user.role === 'MANAGEMENT_USER' 
-                      ? '100px 2fr 80px 2fr 0.7fr 0.7fr 1fr 200px 120px'
-                      : '100px 2fr 80px 2fr 0.7fr 0.7fr 200px 120px'
+                      ? '100px 2fr 80px 2fr 0.7fr 0.7fr 1fr 200px 80px'
+                      : '100px 2fr 80px 2fr 0.7fr 0.7fr 200px 80px'
                   }}>
                   <div className="text-sm font-semibold text-gray-800">発送日</div>
                   <div className="text-sm font-semibold text-gray-800">備品名</div>
@@ -437,8 +473,8 @@ export default function ShipmentsPage() {
                   <div key={shipment.id} className="flex items-center justify-between px-6 py-2 mt-1 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors w-full" style={{ minWidth: '800px' }}>
                     <div className={`flex-1 grid grid-cols-1 sm:grid-cols-4 ${user.role === 'MANAGEMENT_USER' ? 'lg:grid-cols-9' : 'lg:grid-cols-8'} gap-2 items-center`} style={{
                       gridTemplateColumns: user.role === 'MANAGEMENT_USER' 
-                        ? '100px 2fr 80px 2fr 0.7fr 0.7fr 1fr 200px 120px'
-                        : '100px 2fr 80px 2fr 0.7fr 0.7fr 200px 120px'
+                        ? '100px 2fr 80px 2fr 0.7fr 0.7fr 1fr 200px 80px'
+                        : '100px 2fr 80px 2fr 0.7fr 0.7fr 200px 80px'
                     }}>
                       <div className="text-sm text-gray-700">
                         {shipment.shippedAt 
@@ -466,112 +502,80 @@ export default function ShipmentsPage() {
                           {shipment.shipmentDepartment?.name}
                         </div>
                       )}
-                      <div className="text-sm text-gray-600" style={{ 
-                        maxWidth: '200px', 
-                        overflow: 'hidden', 
-                        wordBreak: 'break-all',
-                        lineHeight: '1.2'
-                      }}>
-                        {shipment.notes ? (
-                          <span title={shipment.notes} style={{
-                            display: 'block',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                          }}>
-                            {shipment.notes.length > 25 ? `${shipment.notes.substring(0, 25)}...` : shipment.notes}
-                          </span>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
+                      <div className="text-sm text-gray-600 truncate" title={shipment.memo || ''}>
+                        {shipment.memo 
+                          ? shipment.memo.length > 20 
+                            ? `${shipment.memo.substring(0, 20)}...` 
+                            : shipment.memo
+                          : '-'
+                        }
                       </div>
-                      <div className="flex gap-1 flex-nowrap">
-                        {(() => {
-                          const today = new Date()
-                          today.setHours(0, 0, 0, 0) // 今日の00:00:00に設定
-                          const shippedDate = shipment.shippedAt ? new Date(shipment.shippedAt) : null
-                          shippedDate?.setHours(0, 0, 0, 0) // 発送日の00:00:00に設定
-                          const isShippedPastOrToday = shippedDate && shippedDate <= today
-                          
-                          return (
-                            <>
-                              {isShippedPastOrToday ? (
-                                <Button 
-                                  variant="secondary" 
-                                  size="sm" 
-                                  disabled
-                                  title="発送済みまたは当日発送分は編集できません"
-                                  className="px-2 py-1 text-xs whitespace-nowrap h-6 min-w-0"
+                      <div className="relative dropdown-container">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            const shipmentIdString = String(shipment.id)
+                            handleDropdownToggle(e, shipmentIdString)
+                          }}
+                          className="flex items-center justify-center w-8 h-8 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors duration-200 min-h-12 px-4 py-4"
+                        >
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                          </svg>
+                        </button>
+                        {openDropdown === String(shipment.id) && (
+                          (() => {
+                            const shipmentIdString = String(shipment.id)
+                            const position = dropdownPositions[shipmentIdString] || 'bottom'
+                            return (
+                              <div className={`absolute ${position === 'top' ? 'bottom-8' : 'top-8'} right-0 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50 w-24`}>
+                                <Link
+                                  href={`/shipments/${shipment.id}/edit`}
+                                  className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
                                 >
                                   編集
-                                </Button>
-                              ) : (
-                                <Link href={`/shipments/${shipment.id}/edit`}>
-                                  <Button variant="secondary" size="sm" className="px-2 py-1 text-xs whitespace-nowrap h-6 min-w-0">
-                                    編集
-                                  </Button>
                                 </Link>
-                              )}
-                              
-                              {isShippedPastOrToday ? (
-                                <Button 
-                                  variant="error" 
-                                  size="sm" 
-                                  disabled
-                                  title="発送済みまたは当日発送分は削除できません"
-                                  className="px-2 py-1 text-xs whitespace-nowrap h-6 min-w-0"
+                                <button
+                                  onClick={() => handleDelete(String(shipment.id), shipment.item?.name || '不明')}
+                                  disabled={deleteLoading === String(shipment.id)}
+                                  className="w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 text-left flex items-center disabled:opacity-50"
                                 >
-                                  削除
-                                </Button>
-                              ) : (
-                                <Button 
-                                  variant="error" 
-                                  size="sm"
-                                  loading={deleteLoading === shipment.id}
-                                  disabled={deleteLoading === shipment.id}
-                                  onClick={() => handleDelete(shipment.id, shipment.item?.name || '')}
-                                  className="px-2 py-1 text-xs whitespace-nowrap h-6 min-w-0"
-                                >
-                                  削除
-                                </Button>
-                              )}
-                            </>
-                          )
-                        })()}
+                                  {deleteLoading === String(shipment.id) ? '削除中...' : '削除'}
+                                </button>
+                              </div>
+                            )
+                          })()
+                        )}
                       </div>
                     </div>
                   </div>
                 ))}
-                  
-                  {pagination.totalPages > 1 && (
-                <div className="flex justify-between items-center mt-6">
-                  <div className="text-sm text-gray-600">
-                    {pagination.total}件中 {((pagination.page - 1) * pagination.limit) + 1}-
-                    {Math.min(pagination.page * pagination.limit, pagination.total)}件を表示
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="secondary"
-                      size="sm"
+              </div>
+
+              {/* ページネーション */}
+              <div className="flex justify-between items-center mt-6">
+                <div className="text-sm text-gray-600">
+                  {pagination.total}件中 {(pagination.page - 1) * pagination.limit + 1}～{Math.min(pagination.page * pagination.limit, pagination.total)}件
+                </div>
+                <div className="flex gap-2">
+                  {pagination.page > 1 && (
+                    <Button 
+                      variant="secondary" 
                       onClick={() => handlePageChange(pagination.page - 1)}
-                      disabled={pagination.page <= 1}
                     >
                       前へ
                     </Button>
-                    <span className="px-3 py-2 text-sm">
-                      {pagination.page} / {pagination.totalPages}
-                    </span>
-                    <Button
+                  )}
+                  {pagination.page < pagination.totalPages && (
+                    <Button 
                       variant="secondary"
-                      size="sm"
                       onClick={() => handlePageChange(pagination.page + 1)}
-                      disabled={pagination.page >= pagination.totalPages}
                     >
                       次へ
                     </Button>
-                  </div>
+                  )}
                 </div>
-              )}
               </div>
             </div>
           )}
