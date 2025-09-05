@@ -502,11 +502,11 @@ export default function ShipmentsPage() {
                           {shipment.shipmentDepartment?.name}
                         </div>
                       )}
-                      <div className="text-sm text-gray-600 truncate" title={shipment.memo || ''}>
-                        {shipment.memo 
-                          ? shipment.memo.length > 20 
-                            ? `${shipment.memo.substring(0, 20)}...` 
-                            : shipment.memo
+                      <div className="text-sm text-gray-600 truncate" title={shipment.notes || ''}>
+                        {shipment.notes 
+                          ? shipment.notes.length > 20 
+                            ? `${shipment.notes.substring(0, 20)}...` 
+                            : shipment.notes
                           : '-'
                         }
                       </div>

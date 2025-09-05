@@ -56,7 +56,8 @@
       "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\shipments/**)",
       "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\shipments/**)",
       "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\shipments/**)",
-      "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\shipments\\[id]\\edit/**)"
+      "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\shipments\\[id]\\edit/**)",
+      "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\types/**)"
     ],
     "deny": [],
     "ask": [],
