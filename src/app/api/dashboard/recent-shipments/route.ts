@@ -115,8 +115,6 @@ async function processRequest(request: NextRequest, user: any) {
 
     const shipments = await prisma.shipment.findMany({
       where,
-      // パフォーマンス向上のため最大100件に制限
-      take: 100,
       orderBy: [
         { shippedAt: 'desc' },
         { createdAt: 'desc' }
