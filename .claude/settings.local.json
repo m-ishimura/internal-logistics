@@ -76,7 +76,8 @@
       "Bash(npx next:*)",
       "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\shipments/**)",
       "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\shipments/**)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(del \"C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\api\\dashboard\\recent-shipments\\route.ts\")"
     ],
     "deny": [],
     "ask": [],

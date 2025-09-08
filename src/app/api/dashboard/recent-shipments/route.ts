@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserFromHeaders } from '@/lib/auth'
-import { paginationSchema } from '@/lib/validation'
+import Joi from 'joi'
+
+// recent-shipments API専用のスキーマ（基本的なページネーション + フィルターパラメータ）
+const recentShipmentsSchema = Joi.object({
+  page: Joi.number().integer().min(1).default(1),
+  limit: Joi.number().integer().min(1).max(1000).default(50),
+  startDate: Joi.string().optional().allow(null, ''),
+  endDate: Joi.string().optional().allow(null, ''),
+  destinationDepartmentId: Joi.string().optional().allow(null, '')
+})
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,7 +25,7 @@ export async function GET(request: NextRequest) {
       )
     }
     
-    console.log('[Recent Shipments] Processing with real-time user data:', {
+    console.log('[Recent Shipments] Processing with user:', {
       userId: user.id,
       email: user.email,
       role: user.role,
@@ -25,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     return await processRequest(request, user)
   } catch (error) {
-    console.error('Get dashboard recent shipments error:', error)
+    console.error('[Recent Shipments] Main error:', error)
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }
@@ -35,40 +44,48 @@ export async function GET(request: NextRequest) {
 
 async function processRequest(request: NextRequest, user: any) {
   try {
-    console.log('[Recent Shipments] Processing request with user:', {
-      userId: user.id,
-      role: user.role,
-      departmentId: user.departmentId
-    })
-
     const url = new URL(request.url)
     const searchParams = url.searchParams
     
-    // ページネーションパラメータのバリデーション
-    const queryParams = {
+    // パラメータを取得し、型変換
+    const rawParams = {
       page: searchParams.get('page'),
       limit: searchParams.get('limit'),
-      departmentId: searchParams.get('departmentId'),
-      destinationDepartmentId: searchParams.get('destinationDepartmentId'),
       startDate: searchParams.get('startDate'),
-      endDate: searchParams.get('endDate')
+      endDate: searchParams.get('endDate'),
+      destinationDepartmentId: searchParams.get('destinationDepartmentId')
+    }
+    
+    console.log('[Recent Shipments] Raw params:', rawParams)
+
+    // 型変換後のパラメータ
+    const queryParams = {
+      page: rawParams.page ? parseInt(rawParams.page) : 1,
+      limit: rawParams.limit ? parseInt(rawParams.limit) : 50,
+      startDate: rawParams.startDate || null,
+      endDate: rawParams.endDate || null,
+      destinationDepartmentId: rawParams.destinationDepartmentId || null
     }
 
-    const { error: validationError, value } = paginationSchema.validate(queryParams)
+    console.log('[Recent Shipments] Converted params:', queryParams)
+
+    // バリデーション
+    const { error: validationError, value } = recentShipmentsSchema.validate(queryParams)
     if (validationError) {
+      console.error('[Recent Shipments] Validation error:', {
+        message: validationError.details[0].message,
+        details: validationError.details,
+        input: queryParams
+      })
       return NextResponse.json(
-        { success: false, error: validationError.details[0].message },
+        { success: false, error: `Validation error: ${validationError.details[0].message}` },
         { status: 400 }
       )
     }
 
-    const { page, limit } = value
-    
-    // フィルターパラメータ
-    const filterDepartmentId = searchParams.get('departmentId')
-    const filterDestinationDepartmentId = searchParams.get('destinationDepartmentId')
-    const startDate = searchParams.get('startDate')
-    const endDate = searchParams.get('endDate')
+    console.log('[Recent Shipments] Validation successful:', value)
+
+    const { page, limit, startDate, endDate, destinationDepartmentId } = value
     
     // デフォルトの日付範囲（本日-7日〜本日+7日）
     const defaultStartDate = new Date()
@@ -80,6 +97,8 @@ async function processRequest(request: NextRequest, user: any) {
     const dateEnd = endDate ? new Date(endDate) : defaultEndDate
     // 終了日は23:59:59まで含める
     dateEnd.setHours(23, 59, 59, 999)
+
+    console.log('[Recent Shipments] Date range:', { dateStart, dateEnd })
 
     // WHERE条件の構築（発送済みと未発送の両方を含める）
     let where: Record<string, any> = {
@@ -107,18 +126,13 @@ async function processRequest(request: NextRequest, user: any) {
     
     if (user.role === 'DEPARTMENT_USER') {
       // 部署ユーザーは自部署の発送のみ表示
-      console.log('[Recent Shipments] Filtering by departmentId for DEPARTMENT_USER:', {
-        userId: user.id,
-        departmentId: user.departmentId
-      })
+      console.log('[Recent Shipments] Adding department filter for DEPARTMENT_USER:', user.departmentId)
       additionalFilters.push({ shipmentDepartmentId: user.departmentId })
     } else {
       // 管理者の場合のフィルター
-      if (filterDepartmentId && filterDepartmentId !== 'all') {
-        additionalFilters.push({ shipmentDepartmentId: parseInt(filterDepartmentId) })
-      }
-      if (filterDestinationDepartmentId && filterDestinationDepartmentId !== 'all') {
-        additionalFilters.push({ destinationDepartmentId: parseInt(filterDestinationDepartmentId) })
+      if (destinationDepartmentId && destinationDepartmentId !== 'all') {
+        console.log('[Recent Shipments] Adding destination department filter:', destinationDepartmentId)
+        additionalFilters.push({ destinationDepartmentId: parseInt(destinationDepartmentId) })
       }
     }
     
@@ -132,11 +146,10 @@ async function processRequest(request: NextRequest, user: any) {
     }
 
     console.log('[Recent Shipments] Final WHERE clause:', JSON.stringify(where, null, 2))
-    console.log('[Recent Shipments] Additional filters applied:', additionalFilters)
-    console.log('[Recent Shipments] Pagination params:', { page, limit })
 
     // 総件数を取得
     const totalCount = await prisma.shipment.count({ where })
+    console.log('[Recent Shipments] Total count:', totalCount)
 
     const shipments = await prisma.shipment.findMany({
       where,
@@ -194,6 +207,14 @@ async function processRequest(request: NextRequest, user: any) {
 
     const totalPages = Math.ceil(totalCount / limit)
 
+    console.log('[Recent Shipments] Query successful:', {
+      totalCount,
+      shipmentsReturned: shipments.length,
+      page,
+      limit,
+      totalPages
+    })
+
     return NextResponse.json({
       success: true,
       data: shipments,
@@ -205,7 +226,7 @@ async function processRequest(request: NextRequest, user: any) {
       }
     })
   } catch (error) {
-    console.error('Get dashboard recent shipments error:', error)
+    console.error('[Recent Shipments] Process error:', error)
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }
