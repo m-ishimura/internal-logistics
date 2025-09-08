@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { Card, CardHeader, CardTitle, CardContent, Select, Input } from '@/components/ui'
-import type { Department, Shipment } from '@/types'
+import { Card, CardHeader, CardTitle, CardContent, Select, Input, Button } from '@/components/ui'
+import type { Department, Shipment, PaginatedResponse } from '@/types'
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -14,6 +14,13 @@ export default function DashboardPage() {
   const [selectedDestinationDepartment, setSelectedDestinationDepartment] = useState('all')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [displayLimit, setDisplayLimit] = useState(50)
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 50,
+    total: 0,
+    totalPages: 0
+  })
 
   // デフォルト日付設定（本日-7日〜本日+7日）
   useEffect(() => {
@@ -32,12 +39,21 @@ export default function DashboardPage() {
       fetchRecentShipments()
       fetchDepartments()
     }
-  }, [user, selectedDepartment, selectedDestinationDepartment, startDate, endDate]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user, selectedDepartment, selectedDestinationDepartment, startDate, endDate, displayLimit, pagination.page]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 表示件数が変更されたときはページを1に戻す
+  useEffect(() => {
+    if (displayLimit !== pagination.limit) {
+      setPagination(prev => ({ ...prev, page: 1, limit: displayLimit }))
+    }
+  }, [displayLimit, pagination.limit])
 
   const fetchRecentShipments = async () => {
     try {
       setLoading(true)
       const params = new URLSearchParams()
+      params.append('page', String(pagination.page))
+      params.append('limit', String(displayLimit))
       if (selectedDepartment !== 'all') {
         params.append('departmentId', selectedDepartment)
       }
@@ -56,8 +72,9 @@ export default function DashboardPage() {
       })
       
       if (response.ok) {
-        const data = await response.json()
+        const data: PaginatedResponse<Shipment> = await response.json()
         setShipments(data.data)
+        setPagination(data.pagination)
       }
     } catch (error) {
       console.error('Failed to fetch recent shipments:', error)
@@ -94,6 +111,10 @@ export default function DashboardPage() {
   const getDepartmentNameById = (departmentId: string | number) => {
     const dept = departments.find(d => d.id.toString() === departmentId.toString())
     return dept?.name || `部署ID: ${departmentId}`
+  }
+
+  const handlePageChange = (newPage: number) => {
+    setPagination(prev => ({ ...prev, page: newPage }))
   }
 
   if (!user) return null
@@ -175,7 +196,7 @@ export default function DashboardPage() {
             <CardContent>
               {/* フィルターコントロール */}
               <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                   {user.role === 'MANAGEMENT_USER' && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -232,6 +253,19 @@ export default function DashboardPage() {
                       onChange={(e) => setEndDate(e.target.value)}
                     />
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      表示件数
+                    </label>
+                    <Select
+                      value={displayLimit}
+                      onChange={(e) => setDisplayLimit(Number(e.target.value))}
+                    >
+                      <option value="25">25件</option>
+                      <option value="50">50件</option>
+                      <option value="100">100件</option>
+                    </Select>
+                  </div>
                 </div>
               </div>
 
@@ -241,6 +275,7 @@ export default function DashboardPage() {
                   <p className="text-gray-600">発送履歴を読み込み中...</p>
                 </div>
               ) : shipments.length > 0 ? (
+                <>
                 <div className="space-y-2">
                   {/* ヘッダー */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-7 gap-2 px-3 py-2 border-b border-gray-200">
@@ -282,6 +317,38 @@ export default function DashboardPage() {
                     </div>
                   ))}
                 </div>
+
+                {/* ページネーション */}
+                {pagination.totalPages > 1 && (
+                  <div className="flex justify-between items-center mt-6">
+                    <div className="text-sm text-gray-600">
+                      {pagination.total}件中 {(pagination.page - 1) * pagination.limit + 1}〜
+                      {Math.min(pagination.page * pagination.limit, pagination.total)}件を表示
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handlePageChange(pagination.page - 1)}
+                        disabled={pagination.page <= 1}
+                      >
+                        前へ
+                      </Button>
+                      <span className="px-3 py-2 text-sm">
+                        {pagination.page} / {pagination.totalPages}
+                      </span>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handlePageChange(pagination.page + 1)}
+                        disabled={pagination.page >= pagination.totalPages}
+                      >
+                        次へ
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                </>
               ) : (
                 <div className="text-center py-8">
                   <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

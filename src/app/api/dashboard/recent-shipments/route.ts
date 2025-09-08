@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserFromHeaders } from '@/lib/auth'
+import { paginationSchema } from '@/lib/validation'
 
 export async function GET(request: NextRequest) {
   try {
@@ -42,6 +43,26 @@ async function processRequest(request: NextRequest, user: any) {
 
     const url = new URL(request.url)
     const searchParams = url.searchParams
+    
+    // ページネーションパラメータのバリデーション
+    const queryParams = {
+      page: searchParams.get('page'),
+      limit: searchParams.get('limit'),
+      departmentId: searchParams.get('departmentId'),
+      destinationDepartmentId: searchParams.get('destinationDepartmentId'),
+      startDate: searchParams.get('startDate'),
+      endDate: searchParams.get('endDate')
+    }
+
+    const { error: validationError, value } = paginationSchema.validate(queryParams)
+    if (validationError) {
+      return NextResponse.json(
+        { success: false, error: validationError.details[0].message },
+        { status: 400 }
+      )
+    }
+
+    const { page, limit } = value
     
     // フィルターパラメータ
     const filterDepartmentId = searchParams.get('departmentId')
@@ -112,6 +133,10 @@ async function processRequest(request: NextRequest, user: any) {
 
     console.log('[Recent Shipments] Final WHERE clause:', JSON.stringify(where, null, 2))
     console.log('[Recent Shipments] Additional filters applied:', additionalFilters)
+    console.log('[Recent Shipments] Pagination params:', { page, limit })
+
+    // 総件数を取得
+    const totalCount = await prisma.shipment.count({ where })
 
     const shipments = await prisma.shipment.findMany({
       where,
@@ -119,6 +144,8 @@ async function processRequest(request: NextRequest, user: any) {
         { shippedAt: 'desc' },
         { createdAt: 'desc' }
       ],
+      skip: (page - 1) * limit,
+      take: limit,
       select: {
         id: true,
         quantity: true,
@@ -165,9 +192,17 @@ async function processRequest(request: NextRequest, user: any) {
       }
     })
 
+    const totalPages = Math.ceil(totalCount / limit)
+
     return NextResponse.json({
       success: true,
-      data: shipments
+      data: shipments,
+      pagination: {
+        page,
+        limit,
+        total: totalCount,
+        totalPages
+      }
     })
   } catch (error) {
     console.error('Get dashboard recent shipments error:', error)
