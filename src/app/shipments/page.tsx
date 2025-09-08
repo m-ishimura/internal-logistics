@@ -100,7 +100,7 @@ export default function ShipmentsPage() {
 
   const fetchDepartments = async () => {
     try {
-      const response = await fetch('/api/departments', {
+      const response = await fetch('/api/departments?sortBy=id&sortOrder=asc', {
         credentials: 'include'
       })
       if (response.ok) {
@@ -115,7 +115,7 @@ export default function ShipmentsPage() {
   const fetchDestinations = async () => {
     try {
       // 発送先フィルター用の部署一覧を取得（全ユーザーがアクセス可能）
-      const response = await fetch('/api/departments?forShipment=true', {
+      const response = await fetch('/api/departments?forShipment=true&sortBy=id&sortOrder=asc', {
         credentials: 'include'
       })
       if (response.ok) {

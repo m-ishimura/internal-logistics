@@ -68,7 +68,15 @@
       "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\shipments/**)",
       "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\shipments/**)",
       "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\shipments/**)",
-      "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\shipments/**)"
+      "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\shipments/**)",
+      "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\items\\new/**)",
+      "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\shipments\\new/**)",
+      "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\shipments\\[id]\\edit/**)",
+      "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\shipments/**)",
+      "Bash(npx next:*)",
+      "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\shipments/**)",
+      "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\shipments/**)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": [],

@@ -96,7 +96,7 @@ export default function NewShipmentPage() {
 
   const fetchDepartments = async () => {
     try {
-      const response = await fetch('/api/departments?limit=1000&forShipment=true', {
+      const response = await fetch('/api/departments?limit=1000&forShipment=true&sortBy=id&sortOrder=asc', {
         credentials: 'include'
       })
       

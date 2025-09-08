@@ -115,7 +115,8 @@ async function processRequest(request: NextRequest, user: any) {
 
     const shipments = await prisma.shipment.findMany({
       where,
-      // フィルター条件に一致するすべてのデータを取得
+      // パフォーマンス向上のため最大100件に制限
+      take: 100,
       orderBy: [
         { shippedAt: 'desc' },
         { createdAt: 'desc' }
