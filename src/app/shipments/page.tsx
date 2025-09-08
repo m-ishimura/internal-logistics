@@ -28,6 +28,7 @@ export default function ShipmentsPage() {
   const [showFilters, setShowFilters] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
   const [dropdownPositions, setDropdownPositions] = useState<{[key: string]: 'top' | 'bottom'}>({})
+  const [displayLimit, setDisplayLimit] = useState(50)
   
   // フィルター状態
   const [filters, setFilters] = useState(() => {
@@ -48,7 +49,7 @@ export default function ShipmentsPage() {
   
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 20,
+    limit: 50,
     total: 0,
     totalPages: 0
   })
@@ -58,7 +59,7 @@ export default function ShipmentsPage() {
       setLoading(true)
       const queryParams = new URLSearchParams({
         page: String(pageNum),
-        limit: String(20),
+        limit: String(displayLimit),
         ...(searchFilters.itemId && { itemId: searchFilters.itemId }),
         ...(searchFilters.destination && { destination: searchFilters.destination }),
         ...(searchFilters.sourceDepartmentId && { sourceDepartmentId: searchFilters.sourceDepartmentId }),
@@ -138,6 +139,20 @@ export default function ShipmentsPage() {
       }
     }
   }, [user])
+
+  // 表示件数が変更されたときはページを1に戻す
+  useEffect(() => {
+    if (displayLimit !== pagination.limit) {
+      setPagination(prev => ({ ...prev, page: 1, limit: displayLimit }))
+    }
+  }, [displayLimit, pagination.limit])
+
+  // displayLimitが変更されたときに検索を実行
+  useEffect(() => {
+    if (user && displayLimit !== pagination.limit) {
+      fetchShipments(filters, 1)
+    }
+  }, [displayLimit, user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ドロップダウン外クリックで閉じる
   useEffect(() => {
@@ -316,7 +331,7 @@ export default function ShipmentsPage() {
             {showFilters && (
               <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl border border-gray-200 shadow-sm mb-6">
                 <form onSubmit={handleSearch} className="p-6 pb-3">
-                  <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${user?.role === 'MANAGEMENT_USER' ? 'xl:grid-cols-5' : 'xl:grid-cols-4'} gap-4 mb-6`}>
+                  <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${user?.role === 'MANAGEMENT_USER' ? 'xl:grid-cols-6' : 'xl:grid-cols-5'} gap-4 mb-6`}>
                     {/* 備品選択 */}
                     <div className="space-y-2">
                       <label className="flex items-center text-sm font-semibold text-gray-700">
@@ -416,6 +431,25 @@ export default function ShipmentsPage() {
                         onChange={(e) => handleFilterChange('shippedToDate', e.target.value)}
                         className="h-10 rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                       />
+                    </div>
+
+                    {/* 表示件数選択 */}
+                    <div className="space-y-2">
+                      <label className="flex items-center text-sm font-semibold text-gray-700">
+                        <svg className="w-4 h-4 mr-1.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                        </svg>
+                        表示件数
+                      </label>
+                      <Select
+                        value={displayLimit}
+                        onChange={(e) => setDisplayLimit(Number(e.target.value))}
+                        className="h-10 rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                      >
+                        <option value="25">25件</option>
+                        <option value="50">50件</option>
+                        <option value="100">100件</option>
+                      </Select>
                     </div>
                   </div>
 
@@ -570,29 +604,35 @@ export default function ShipmentsPage() {
               </div>
 
               {/* ページネーション */}
-              <div className="flex justify-between items-center mt-6">
-                <div className="text-sm text-gray-600">
-                  {pagination.total}件中 {(pagination.page - 1) * pagination.limit + 1}～{Math.min(pagination.page * pagination.limit, pagination.total)}件
-                </div>
-                <div className="flex gap-2">
-                  {pagination.page > 1 && (
-                    <Button 
-                      variant="secondary" 
+              {pagination.totalPages > 1 && (
+                <div className="flex justify-between items-center mt-6">
+                  <div className="text-sm text-gray-600">
+                    {pagination.total}件中 {(pagination.page - 1) * pagination.limit + 1}〜
+                    {Math.min(pagination.page * pagination.limit, pagination.total)}件を表示
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => handlePageChange(pagination.page - 1)}
+                      disabled={pagination.page <= 1}
                     >
                       前へ
                     </Button>
-                  )}
-                  {pagination.page < pagination.totalPages && (
-                    <Button 
+                    <span className="px-3 py-2 text-sm">
+                      {pagination.page} / {pagination.totalPages}
+                    </span>
+                    <Button
                       variant="secondary"
+                      size="sm"
                       onClick={() => handlePageChange(pagination.page + 1)}
+                      disabled={pagination.page >= pagination.totalPages}
                     >
                       次へ
                     </Button>
-                  )}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </CardContent>
