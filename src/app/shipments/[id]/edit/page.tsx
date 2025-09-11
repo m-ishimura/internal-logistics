@@ -477,12 +477,12 @@ export default function EditShipmentPage() {
 
                 <Input
                   id="shippedAt"
-                  label="発送日"
+                  label="登録日"
                   type="date"
                   value={formData.shippedAt}
                   onChange={(e) => handleChange('shippedAt', e.target.value)}
                   required
-                  help="発送日を入力してください"
+                  help="登録日を入力してください"
                 />
 
                 <div className="flex gap-4 pt-6">

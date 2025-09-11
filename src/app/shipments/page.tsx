@@ -401,13 +401,13 @@ export default function ShipmentsPage() {
                       </div>
                     )}
 
-                    {/* 発送日範囲 - 開始 */}
+                    {/* 登録日範囲 - 開始 */}
                     <div className="space-y-2">
                       <label className="flex items-center text-sm font-semibold text-gray-700">
                         <svg className="w-4 h-4 mr-1.5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        発送日（開始）
+                        登録日（開始）
                       </label>
                       <Input
                         type="date"
@@ -417,13 +417,13 @@ export default function ShipmentsPage() {
                       />
                     </div>
 
-                    {/* 発送日範囲 - 終了 */}
+                    {/* 登録日範囲 - 終了 */}
                     <div className="space-y-2">
                       <label className="flex items-center text-sm font-semibold text-gray-700">
                         <svg className="w-4 h-4 mr-1.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        発送日（終了）
+                        登録日（終了）
                       </label>
                       <Input
                         type="date"
@@ -498,7 +498,7 @@ export default function ShipmentsPage() {
                       ? '100px 2fr 80px 2fr 0.7fr 0.7fr 1fr 200px 80px'
                       : '100px 2fr 80px 2fr 0.7fr 0.7fr 200px 80px'
                   }}>
-                  <div className="text-sm font-semibold text-gray-800">発送日</div>
+                  <div className="text-sm font-semibold text-gray-800">登録日</div>
                   <div className="text-sm font-semibold text-gray-800">備品名</div>
                   <div className="text-sm font-semibold text-gray-800">数量</div>
                   <div className="text-sm font-semibold text-gray-800">発送先</div>

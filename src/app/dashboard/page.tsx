@@ -279,7 +279,7 @@ export default function DashboardPage() {
                 <div className="space-y-2">
                   {/* ヘッダー */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-7 gap-2 px-3 py-2 border-b border-gray-200">
-                    <div className="text-sm font-medium text-gray-700">発送日</div>
+                    <div className="text-sm font-medium text-gray-700">登録日</div>
                     <div className="text-sm font-medium text-gray-700">備品名</div>
                     <div className="text-sm font-medium text-gray-700">数量</div>
                     <div className="text-sm font-medium text-gray-700">発送先</div>
