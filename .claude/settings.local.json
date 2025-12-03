@@ -77,7 +77,10 @@
       "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\shipments/**)",
       "Read(/C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\shipments/**)",
       "Bash(dir:*)",
-      "Bash(del \"C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\api\\dashboard\\recent-shipments\\route.ts\")"
+      "Bash(del \"C:\\Users\\MasahiroIshimura\\my-app\\internal-logistics\\src\\app\\api\\dashboard\\recent-shipments\\route.ts\")",
+      "Bash(npm view:*)",
+      "Bash(npm audit:*)",
+      "Bash(timeout 15 npm run dev:*)"
     ],
     "deny": [],
     "ask": [],
