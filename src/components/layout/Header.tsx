@@ -22,7 +22,7 @@ export default function Header() {
       'relative px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200',
       isActive(href)
         ? 'text-blue-700 bg-blue-50'
-        : 'text-gray-600 hover:text-blue-700 hover:bg-gray-50',
+        : 'text-gray-800 hover:text-blue-700 hover:bg-blue-50',
     ].join(' ')
 
   return (
@@ -88,7 +88,7 @@ export default function Header() {
               href="https://www.notion.so/i-cube-regulations-manuals/26393ea640b48015be95e036a6062911"
               target="_blank"
               rel="noopener noreferrer"
-              className="relative px-4 py-2 text-sm font-semibold rounded-md text-gray-600 hover:text-blue-700 hover:bg-gray-50 transition-all duration-200 flex items-center gap-1.5"
+              className="relative px-4 py-2 text-sm font-semibold rounded-md text-gray-800 hover:text-blue-700 hover:bg-blue-50 transition-all duration-200 flex items-center gap-1.5"
             >
               マニュアル
               <svg className="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -103,7 +103,7 @@ export default function Header() {
                     'relative px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200 flex items-center gap-1',
                     (isActive('/departments') || isActive('/users'))
                       ? 'text-blue-700 bg-blue-50'
-                      : 'text-gray-600 hover:text-blue-700 hover:bg-gray-50',
+                      : 'text-gray-800 hover:text-blue-700 hover:bg-blue-50',
                   ].join(' ')}
                 >
                   管理者メニュー
