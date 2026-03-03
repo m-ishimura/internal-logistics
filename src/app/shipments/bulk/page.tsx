@@ -127,6 +127,33 @@ export default function BulkShipmentPage() {
     }
   }
 
+  const downloadTemplate = () => {
+    let csvContent = ''
+    let fileName = ''
+
+    if (user?.role === 'MANAGEMENT_USER') {
+      csvContent = 'item_name,quantity,destination_department_name,shipment_department_name,shipment_user_name,tracking_number,notes,shipped_at\n' +
+                   'オフィス用品セット,2,東京オフィス,IT部,田中太郎,123-456-789,急送,2024-01-15 14:30\n' +
+                   'A4用紙,10,大阪支社,,佐藤花子,通常配送,\n' +
+                   'ノートパソコン,1,営業部,IT部,,,緊急配送,2024-01-16'
+      fileName = 'shipment_template_management.csv'
+    } else {
+      csvContent = 'item_name,quantity,destination_department_name,shipment_user_name,tracking_number,notes,shipped_at\n' +
+                   'オフィス用品セット,2,東京オフィス,田中太郎,123-456-789,急送,2024-01-15 14:30\n' +
+                   'A4用紙,10,大阪支社,,通常配送,'
+      fileName = 'shipment_template.csv'
+    }
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', fileName)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
 
   if (!user) return null
 
@@ -201,6 +228,55 @@ export default function BulkShipmentPage() {
               onChange={handleFileSelect}
               className="hidden"
             />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>使用方法</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <h3 className="font-medium mb-2">1. テンプレートをダウンロード</h3>
+              <Button variant="secondary" size="sm" onClick={downloadTemplate}>
+                テンプレートをダウンロード
+              </Button>
+            </div>
+            <div>
+              <h3 className="font-medium mb-2">2. データを入力</h3>
+              <p className="text-sm text-gray-600">
+                テンプレートに発送データを入力してください。
+              </p>
+            </div>
+            <div>
+              <h3 className="font-medium mb-2">3. ファイルをアップロード</h3>
+              <p className="text-sm text-gray-600">
+                完成したファイルを上記のエリアにドラッグ＆ドロップするか、ファイルを選択してください。
+              </p>
+            </div>
+            <div className="bg-blue-50 p-4 rounded-md">
+              <h4 className="font-medium text-blue-800 mb-1">発送元部署について</h4>
+              {user?.role === 'MANAGEMENT_USER' ? (
+                <p className="text-sm text-blue-700">
+                  管理者として、CSV の <code className="bg-blue-100 px-1 rounded">shipment_department_name</code> 列で発送元部署を指定できます。
+                  未指定の場合は自動的にあなたの所属部署（{user?.department?.name}）に設定されます。
+                </p>
+              ) : (
+                <p className="text-sm text-blue-700">
+                  発送元部署は自動的にあなたの所属部署（{user?.department?.name}）に設定されます。CSVに発送元部署の列は不要です。
+                </p>
+              )}
+            </div>
+            <div className="bg-yellow-50 p-4 rounded-md">
+              <h4 className="font-medium text-yellow-800 mb-1">注意事項</h4>
+              <ul className="text-sm text-yellow-700 space-y-1">
+                <li>• 備品名は既存の備品と正確に一致させてください</li>
+                <li>• 数量は正の整数で入力してください</li>
+                <li>• 宛先部署名は既存の部署名と正確に一致させてください</li>
+                <li>• 発送先担当者名は該当部署に所属するユーザー名と正確に一致させてください（任意）</li>
+                <li>• 日時は YYYY-MM-DD HH:MM 形式で入力してください</li>
+              </ul>
+            </div>
           </CardContent>
         </Card>
 
