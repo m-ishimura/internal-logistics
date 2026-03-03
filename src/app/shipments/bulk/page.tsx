@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import Encoding from 'encoding-japanese'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { 
@@ -144,7 +145,10 @@ export default function BulkShipmentPage() {
       fileName = 'shipment_template.csv'
     }
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const unicodeArray = Encoding.stringToCode(csvContent)
+    const sjisArray = Encoding.convert(unicodeArray, { to: 'SJIS', from: 'UNICODE' })
+    const uint8Array = new Uint8Array(sjisArray)
+    const blob = new Blob([uint8Array], { type: 'text/csv;charset=shift_jis;' })
     const link = document.createElement('a')
     const url = URL.createObjectURL(blob)
     link.setAttribute('href', url)
