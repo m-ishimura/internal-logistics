@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { 
@@ -28,8 +28,7 @@ export default function ShipmentsPage() {
   const [showFilters, setShowFilters] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
   const [dropdownPositions, setDropdownPositions] = useState<{[key: string]: 'top' | 'bottom'}>({})
-  const [displayLimit, setDisplayLimit] = useState(50)
-  
+
   // フィルター状態
   const [filters, setFilters] = useState(() => {
     const today = new Date()
@@ -54,12 +53,12 @@ export default function ShipmentsPage() {
     totalPages: 0
   })
 
-  const fetchShipments = async (searchFilters: any = {}, pageNum: number = 1) => {
+  const fetchShipments = async (searchFilters: any = {}, pageNum: number = 1, limit: number = pagination.limit) => {
     try {
       setLoading(true)
       const queryParams = new URLSearchParams({
         page: String(pageNum),
-        limit: String(displayLimit),
+        limit: String(limit),
         ...(searchFilters.itemId && { itemId: searchFilters.itemId }),
         ...(searchFilters.destination && { destination: searchFilters.destination }),
         ...(searchFilters.sourceDepartmentId && { sourceDepartmentId: searchFilters.sourceDepartmentId }),
@@ -140,20 +139,6 @@ export default function ShipmentsPage() {
     }
   }, [user])
 
-  // 表示件数が変更されたときはページを1に戻す
-  useEffect(() => {
-    if (displayLimit !== pagination.limit) {
-      setPagination(prev => ({ ...prev, page: 1, limit: displayLimit }))
-    }
-  }, [displayLimit, pagination.limit])
-
-  // displayLimitが変更されたときに検索を実行
-  useEffect(() => {
-    if (user && displayLimit !== pagination.limit) {
-      fetchShipments(filters, 1)
-    }
-  }, [displayLimit, user]) // eslint-disable-line react-hooks/exhaustive-deps
-
   // ドロップダウン外クリックで閉じる
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -221,13 +206,11 @@ export default function ShipmentsPage() {
     }, 1)
   }
 
-  const hasActiveFilters = Object.values(filters).some(value => value !== '')
+  const handleLimitChange = (newLimit: number) => {
+    fetchShipments(filters, 1, newLimit)
+  }
 
-  // Helper function for future use
-  void ((departmentId: string | number) => {
-    const dept = departments.find(d => d.id.toString() === departmentId.toString())
-    return dept?.name || `部署ID: ${departmentId}`
-  })
+  const hasActiveFilters = Object.values(filters).some(value => value !== '')
 
   const handleDelete = async (shipmentId: string, itemName: string, shipment: Shipment) => {
     // 発送済み（過去日）の場合は削除不可
@@ -442,8 +425,8 @@ export default function ShipmentsPage() {
                         表示件数
                       </label>
                       <Select
-                        value={displayLimit}
-                        onChange={(e) => setDisplayLimit(Number(e.target.value))}
+                        value={pagination.limit}
+                        onChange={(e) => handleLimitChange(Number(e.target.value))}
                         className="h-10 rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                       >
                         <option value="25">25件</option>

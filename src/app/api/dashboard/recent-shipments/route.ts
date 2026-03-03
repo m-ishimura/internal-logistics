@@ -25,13 +25,6 @@ export async function GET(request: NextRequest) {
       )
     }
     
-    console.log('[Recent Shipments] Processing with user:', {
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-      departmentId: user.departmentId
-    })
-
     return await processRequest(request, user)
   } catch (error) {
     console.error('[Recent Shipments] Main error:', error)
@@ -45,45 +38,16 @@ export async function GET(request: NextRequest) {
 async function processRequest(request: NextRequest, user: any) {
   try {
     const url = new URL(request.url)
-    const searchParams = url.searchParams
-    
-    // パラメータを取得し、型変換
-    const rawParams = {
-      page: searchParams.get('page'),
-      limit: searchParams.get('limit'),
-      startDate: searchParams.get('startDate'),
-      endDate: searchParams.get('endDate'),
-      destinationDepartmentId: searchParams.get('destinationDepartmentId')
-    }
-    
-    console.log('[Recent Shipments] Raw params:', rawParams)
+    const params = Object.fromEntries(url.searchParams.entries())
 
-    // 型変換後のパラメータ
-    const queryParams = {
-      page: rawParams.page ? parseInt(rawParams.page) : 1,
-      limit: rawParams.limit ? parseInt(rawParams.limit) : 50,
-      startDate: rawParams.startDate || null,
-      endDate: rawParams.endDate || null,
-      destinationDepartmentId: rawParams.destinationDepartmentId || null
-    }
-
-    console.log('[Recent Shipments] Converted params:', queryParams)
-
-    // バリデーション
-    const { error: validationError, value } = recentShipmentsSchema.validate(queryParams)
+    // バリデーション（Joiがstring→numberの型変換も行う）
+    const { error: validationError, value } = recentShipmentsSchema.validate(params)
     if (validationError) {
-      console.error('[Recent Shipments] Validation error:', {
-        message: validationError.details[0].message,
-        details: validationError.details,
-        input: queryParams
-      })
       return NextResponse.json(
-        { success: false, error: `Validation error: ${validationError.details[0].message}` },
+        { success: false, error: validationError.details[0].message },
         { status: 400 }
       )
     }
-
-    console.log('[Recent Shipments] Validation successful:', value)
 
     const { page, limit, startDate, endDate, destinationDepartmentId } = value
     
@@ -97,8 +61,6 @@ async function processRequest(request: NextRequest, user: any) {
     const dateEnd = endDate ? new Date(endDate) : defaultEndDate
     // 終了日は23:59:59まで含める
     dateEnd.setHours(23, 59, 59, 999)
-
-    console.log('[Recent Shipments] Date range:', { dateStart, dateEnd })
 
     // WHERE条件の構築（発送済みと未発送の両方を含める）
     let where: Record<string, any> = {
@@ -126,12 +88,10 @@ async function processRequest(request: NextRequest, user: any) {
     
     if (user.role === 'DEPARTMENT_USER') {
       // 部署ユーザーは自部署の発送のみ表示
-      console.log('[Recent Shipments] Adding department filter for DEPARTMENT_USER:', user.departmentId)
       additionalFilters.push({ shipmentDepartmentId: user.departmentId })
     } else {
       // 管理者の場合のフィルター
       if (destinationDepartmentId && destinationDepartmentId !== 'all') {
-        console.log('[Recent Shipments] Adding destination department filter:', destinationDepartmentId)
         additionalFilters.push({ destinationDepartmentId: parseInt(destinationDepartmentId) })
       }
     }
@@ -145,11 +105,8 @@ async function processRequest(request: NextRequest, user: any) {
       }
     }
 
-    console.log('[Recent Shipments] Final WHERE clause:', JSON.stringify(where, null, 2))
-
     // 総件数を取得
     const totalCount = await prisma.shipment.count({ where })
-    console.log('[Recent Shipments] Total count:', totalCount)
 
     const shipments = await prisma.shipment.findMany({
       where,
@@ -206,14 +163,6 @@ async function processRequest(request: NextRequest, user: any) {
     })
 
     const totalPages = Math.ceil(totalCount / limit)
-
-    console.log('[Recent Shipments] Query successful:', {
-      totalCount,
-      shipmentsReturned: shipments.length,
-      page,
-      limit,
-      totalPages
-    })
 
     return NextResponse.json({
       success: true,
