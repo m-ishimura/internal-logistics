@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { 
@@ -17,7 +17,7 @@ import {
   TableHead,
   TableCell
 } from '@/components/ui'
-import type { BulkImport, BulkImportError, Department, Item } from '@/types'
+import type { BulkImport, BulkImportError } from '@/types'
 
 export default function BulkShipmentPage() {
   const { user } = useAuth()
@@ -29,50 +29,6 @@ export default function BulkShipmentPage() {
   const [uploadResult, setUploadResult] = useState<BulkImport | null>(null)
   const [errors, setErrors] = useState<BulkImportError[]>([])
   const [dragActive, setDragActive] = useState(false)
-  const [departments, setDepartments] = useState<Department[]>([])
-  const [items, setItems] = useState<Item[]>([])
-  const [departmentSearch, setDepartmentSearch] = useState('')
-  const [itemSearch, setItemSearch] = useState('')
-
-  // 部署一覧を取得
-  const fetchDepartments = async () => {
-    try {
-      const response = await fetch('/api/departments?forShipment=true&limit=1000&sortBy=id&sortOrder=asc', {
-        credentials: 'include'
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        setDepartments(data.data || [])
-      }
-    } catch (err) {
-      // エラーは無視
-    }
-  }
-
-  // 備品一覧を取得（権限に応じて）
-  const fetchItems = async () => {
-    try {
-      const response = await fetch('/api/items?limit=1000', {
-        credentials: 'include'
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        setItems(data.data || [])
-      }
-    } catch (err) {
-      // エラーは無視
-    }
-  }
-
-  // 初回データ取得
-  useEffect(() => {
-    if (user) {
-      fetchDepartments()
-      fetchItems()
-    }
-  }, [user])
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
@@ -171,61 +127,12 @@ export default function BulkShipmentPage() {
     }
   }
 
-  const downloadTemplate = () => {
-    let csvContent = ''
-    let fileName = ''
-    
-    if (user?.role === 'MANAGEMENT_USER') {
-      // 管理者用テンプレート：shipment_department_name列を含む
-      csvContent = 'item_name,quantity,destination_department_name,shipment_department_name,shipment_user_name,tracking_number,notes,shipped_at\n' +
-                   'オフィス用品セット,2,東京オフィス,IT部,田中太郎,123-456-789,急送,2024-01-15 14:30\n' +
-                   'A4用紙,10,大阪支社,,佐藤花子,通常配送,\n' +
-                   'ノートパソコン,1,営業部,IT部,,,緊急配送,2024-01-16'
-      fileName = 'shipment_template_management.csv'
-    } else {
-      // 一般ユーザー用テンプレート：従来通り
-      csvContent = 'item_name,quantity,destination_department_name,shipment_user_name,tracking_number,notes,shipped_at\n' +
-                   'オフィス用品セット,2,東京オフィス,田中太郎,123-456-789,急送,2024-01-15 14:30\n' +
-                   'A4用紙,10,大阪支社,,通常配送,'
-      fileName = 'shipment_template.csv'
-    }
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    const url = URL.createObjectURL(blob)
-    link.setAttribute('href', url)
-    link.setAttribute('download', fileName)
-    link.style.visibility = 'hidden'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
-
-  // フィルタリング用のヘルパー関数
-  const filteredDepartments = departments.filter(dept =>
-    dept.name.toLowerCase().includes(departmentSearch.toLowerCase())
-  )
-
-  const filteredItems = items.filter(item =>
-    item.name.toLowerCase().includes(itemSearch.toLowerCase())
-  )
-
-  // 名前をクリップボードにコピー
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      // 短時間の視覚フィードバック（オプション）
-    }).catch(() => {
-      // フォールバック
-    })
-  }
 
   if (!user) return null
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="flex-1 flex items-start px-4 py-8 gap-6">
-        {/* メインコンテンツ */}
-        <div className="flex-1 space-y-6">
+    <div className="w-full px-4 sm:px-6 lg:px-8 space-y-8">
+      <div className="max-w-2xl mx-auto space-y-6">
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900">一括発送登録</h1>
             <p className="mt-2 text-gray-600">
@@ -245,8 +152,7 @@ export default function BulkShipmentPage() {
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+      <Card>
           <CardHeader>
             <CardTitle>ファイルアップロード</CardTitle>
           </CardHeader>
@@ -297,59 +203,6 @@ export default function BulkShipmentPage() {
             />
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>使用方法</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <h3 className="font-medium mb-2">1. テンプレートをダウンロード</h3>
-              <Button variant="secondary" size="sm" onClick={downloadTemplate}>
-                テンプレートをダウンロード
-              </Button>
-            </div>
-
-            <div>
-              <h3 className="font-medium mb-2">2. データを入力</h3>
-              <p className="text-sm text-gray-600">
-                テンプレートに発送データを入力してください。
-              </p>
-            </div>
-
-            <div>
-              <h3 className="font-medium mb-2">3. ファイルをアップロード</h3>
-              <p className="text-sm text-gray-600">
-                完成したファイルを上記のエリアにドラッグ＆ドロップするか、ファイルを選択してください。
-              </p>
-            </div>
-
-            <div className="bg-blue-50 p-4 rounded-md mb-4">
-              <h4 className="font-medium text-blue-800 mb-1">発送元部署について</h4>
-              {user?.role === 'MANAGEMENT_USER' ? (
-                <p className="text-sm text-blue-700">
-                  管理者として、CSV の <code className="bg-blue-100 px-1 rounded">shipment_department_name</code> 列で発送元部署を指定できます。
-                  未指定の場合は自動的にあなたの所属部署（{user?.department?.name}）に設定されます。
-                </p>
-              ) : (
-                <p className="text-sm text-blue-700">
-                  発送元部署は自動的にあなたの所属部署（{user?.department?.name}）に設定されます。CSVに発送元部署の列は不要です。
-                </p>
-              )}
-            </div>
-            <div className="bg-yellow-50 p-4 rounded-md">
-              <h4 className="font-medium text-yellow-800 mb-1">注意事項</h4>
-              <ul className="text-sm text-yellow-700 space-y-1">
-                <li>• 備品名は既存の備品と正確に一致させてください</li>
-                <li>• 数量は正の整数で入力してください</li>
-                <li>• 宛先部署名は既存の部署名と正確に一致させてください</li>
-                <li>• 発送先担当者名は該当部署に所属するユーザー名と正確に一致させてください（任意）</li>
-                <li>• 日時は YYYY-MM-DD HH:MM 形式で入力してください</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       {uploadResult && (
         <Card>
@@ -421,102 +274,6 @@ export default function BulkShipmentPage() {
           </CardContent>
         </Card>
       )}
-        </div>
-
-        {/* サイドパネル */}
-        <div className="w-80 space-y-4 hidden lg:block">
-          {/* 部署一覧 */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">部署一覧</CardTitle>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="部署名で検索..."
-                  value={departmentSearch}
-                  onChange={(e) => setDepartmentSearch(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="max-h-48 overflow-y-auto space-y-1">
-                {filteredDepartments.map((dept) => (
-                  <div
-                    key={dept.id}
-                    onClick={() => copyToClipboard(dept.name)}
-                    className="px-3 py-2 hover:bg-gray-100 rounded-md cursor-pointer transition-colors group"
-                    title="クリックでコピー"
-                  >
-                    <div className="text-sm font-medium text-gray-900 group-hover:text-blue-600">
-                      {dept.name}
-                    </div>
-                  </div>
-                ))}
-                {filteredDepartments.length === 0 && (
-                  <div className="text-sm text-gray-500 text-center py-4">
-                    該当する部署がありません
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* 備品一覧 */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">
-                備品一覧
-                {user?.role === 'DEPARTMENT_USER' && (
-                  <span className="text-sm text-gray-500 font-normal ml-2">
-                    （{user.department?.name}）
-                  </span>
-                )}
-              </CardTitle>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="備品名で検索..."
-                  value={itemSearch}
-                  onChange={(e) => setItemSearch(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="max-h-64 overflow-y-auto space-y-1">
-                {filteredItems.map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => copyToClipboard(item.name)}
-                    className="px-3 py-2 hover:bg-gray-100 rounded-md cursor-pointer transition-colors group"
-                    title="クリックでコピー"
-                  >
-                    <div className="text-sm font-medium text-gray-900 group-hover:text-blue-600">
-                      {item.name}
-                    </div>
-                  </div>
-                ))}
-                {filteredItems.length === 0 && (
-                  <div className="text-sm text-gray-500 text-center py-4">
-                    該当する備品がありません
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* 使用方法 */}
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-xs text-gray-600">
-                <p className="font-medium mb-2">💡 使用方法</p>
-                <p className="mb-1">• 部署名や備品名をクリックするとコピーされます</p>
-                <p>• CSVテンプレート作成時にご活用ください</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </div>
   )
