@@ -231,7 +231,7 @@ export default function NewShipmentPage() {
         </Alert>
       )}
 
-      <div className="max-w-2xl">
+      <div className="max-w-2xl mx-auto">
         <Card>
           <CardHeader>
             <CardTitle>発送情報</CardTitle>
