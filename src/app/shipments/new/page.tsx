@@ -220,7 +220,7 @@ export default function NewShipmentPage() {
 
   return (
     <div className="w-full px-4 sm:px-6 lg:px-8 space-y-8">
-      <div>
+      <div className="max-w-2xl mx-auto">
         <h1 className="page-title">新しい発送を登録</h1>
         <p className="page-subtitle">新しい発送をシステムに登録します</p>
       </div>

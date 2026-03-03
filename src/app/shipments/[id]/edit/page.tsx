@@ -288,7 +288,7 @@ export default function EditShipmentPage() {
 
   return (
     <div className="w-full px-4 sm:px-6 lg:px-8 space-y-8">
-      <div>
+      <div className="max-w-2xl mx-auto">
         <h1 className="page-title">発送を編集</h1>
         <p className="page-subtitle">発送情報を編集します</p>
       </div>
