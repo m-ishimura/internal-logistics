@@ -19,7 +19,7 @@ export default function Header() {
 
   const navLinkClass = (href: string) =>
     [
-      'relative px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200',
+      'relative px-5 py-3 text-sm font-semibold rounded-md transition-all duration-200',
       isActive(href)
         ? 'text-white bg-white/20'
         : 'text-slate-200 hover:text-white hover:bg-white/10',
@@ -31,7 +31,7 @@ export default function Header() {
       role="banner"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-20">
           {/* Logo Section */}
           <div className="flex-shrink-0 flex items-center">
             <Link
@@ -62,7 +62,7 @@ export default function Header() {
 
           {/* Navigation — Center (desktop) */}
           <nav
-            className="hidden md:flex items-center gap-1"
+            className="hidden md:flex items-center gap-2"
             role="navigation"
             aria-label="メインナビゲーション"
           >
@@ -88,7 +88,7 @@ export default function Header() {
               href="https://www.notion.so/i-cube-regulations-manuals/26393ea640b48015be95e036a6062911"
               target="_blank"
               rel="noopener noreferrer"
-              className="relative px-4 py-2 text-sm font-semibold rounded-md text-slate-200 hover:text-white hover:bg-white/10 transition-all duration-200 flex items-center gap-1.5"
+              className="relative px-5 py-3 text-sm font-semibold rounded-md text-slate-200 hover:text-white hover:bg-white/10 transition-all duration-200 flex items-center gap-1.5"
             >
               マニュアル
               <svg className="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,7 +100,7 @@ export default function Header() {
                 <button
                   onMouseEnter={() => setAdminMenuOpen(true)}
                   className={[
-                    'relative px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200 flex items-center gap-1',
+                    'relative px-5 py-3 text-sm font-semibold rounded-md transition-all duration-200 flex items-center gap-1',
                     (isActive('/departments') || isActive('/users'))
                       ? 'text-white bg-white/20'
                       : 'text-slate-200 hover:text-white hover:bg-white/10',
@@ -140,7 +140,7 @@ export default function Header() {
           </nav>
 
           {/* Right Section */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-5">
             {/* User Info (desktop) */}
             <div
               className="hidden sm:flex items-center gap-2.5"
