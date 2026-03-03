@@ -219,7 +219,7 @@ export default function NewShipmentPage() {
   const selectedItem = items.find(item => item.id === formData.itemId)
 
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-8 space-y-6">
+    <div className="w-full px-4 sm:px-6 lg:px-8 space-y-8">
       <div>
         <h1 className="page-title">新しい発送を登録</h1>
         <p className="page-subtitle">新しい発送をシステムに登録します</p>

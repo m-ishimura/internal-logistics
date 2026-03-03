@@ -102,7 +102,7 @@ export default function DashboardPage() {
   if (!user) return null
 
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-8 space-y-6">
+    <div className="w-full px-4 sm:px-6 lg:px-8 space-y-8">
 
       {/* クイックアクション */}
       <Card>

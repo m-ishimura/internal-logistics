@@ -254,7 +254,7 @@ export default function ShipmentsPage() {
   if (!user) return null
 
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-8 space-y-6">
+    <div className="w-full px-4 sm:px-6 lg:px-8 space-y-8">
       <div className="page-header">
         <div>
           <h1 className="page-title">発送管理</h1>

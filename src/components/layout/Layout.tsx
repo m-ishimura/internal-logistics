@@ -36,7 +36,7 @@ export default function Layout({ children }: LayoutProps) {
       <Header />
       <main 
         id="main-content" 
-        className="w-full py-6"
+        className="w-full py-8"
         role="main"
       >
         {children}
