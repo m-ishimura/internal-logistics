@@ -21,13 +21,13 @@ export default function Header() {
     [
       'relative px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200',
       isActive(href)
-        ? 'text-blue-700 bg-blue-50'
-        : 'text-gray-800 hover:text-blue-700 hover:bg-blue-50',
+        ? 'text-white bg-white/20'
+        : 'text-slate-200 hover:text-white hover:bg-white/10',
     ].join(' ')
 
   return (
     <header
-      className="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-200"
+      className="bg-slate-800 shadow-md sticky top-0 z-50"
       role="banner"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -50,10 +50,10 @@ export default function Header() {
                 />
               </div>
               <div className="flex flex-col leading-tight">
-                <span className="text-base font-bold text-gray-900 tracking-tight">
+                <span className="text-base font-bold text-white tracking-tight">
                   アイキューブ
                 </span>
-                <span className="text-xs text-gray-500 hidden sm:block">
+                <span className="text-xs text-slate-400 hidden sm:block">
                   本部便発送システム
                 </span>
               </div>
@@ -69,26 +69,26 @@ export default function Header() {
             <Link href="/dashboard" className={navLinkClass('/dashboard')}>
               ダッシュボード
               {isActive('/dashboard') && (
-                <span className="absolute inset-x-2 -bottom-[1px] h-0.5 bg-blue-600 rounded-full" />
+                <span className="absolute inset-x-2 -bottom-[1px] h-0.5 bg-white rounded-full" />
               )}
             </Link>
             <Link href="/items" className={navLinkClass('/items')}>
               備品管理
               {isActive('/items') && (
-                <span className="absolute inset-x-2 -bottom-[1px] h-0.5 bg-blue-600 rounded-full" />
+                <span className="absolute inset-x-2 -bottom-[1px] h-0.5 bg-white rounded-full" />
               )}
             </Link>
             <Link href="/shipments" className={navLinkClass('/shipments')}>
               発送管理
               {isActive('/shipments') && (
-                <span className="absolute inset-x-2 -bottom-[1px] h-0.5 bg-blue-600 rounded-full" />
+                <span className="absolute inset-x-2 -bottom-[1px] h-0.5 bg-white rounded-full" />
               )}
             </Link>
             <a
               href="https://www.notion.so/i-cube-regulations-manuals/26393ea640b48015be95e036a6062911"
               target="_blank"
               rel="noopener noreferrer"
-              className="relative px-4 py-2 text-sm font-semibold rounded-md text-gray-800 hover:text-blue-700 hover:bg-blue-50 transition-all duration-200 flex items-center gap-1.5"
+              className="relative px-4 py-2 text-sm font-semibold rounded-md text-slate-200 hover:text-white hover:bg-white/10 transition-all duration-200 flex items-center gap-1.5"
             >
               マニュアル
               <svg className="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -102,8 +102,8 @@ export default function Header() {
                   className={[
                     'relative px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200 flex items-center gap-1',
                     (isActive('/departments') || isActive('/users'))
-                      ? 'text-blue-700 bg-blue-50'
-                      : 'text-gray-800 hover:text-blue-700 hover:bg-blue-50',
+                      ? 'text-white bg-white/20'
+                      : 'text-slate-200 hover:text-white hover:bg-white/10',
                   ].join(' ')}
                 >
                   管理者メニュー
@@ -146,21 +146,21 @@ export default function Header() {
               className="hidden sm:flex items-center gap-2.5"
               aria-label={`ログイン中: ${user.name}, 部署: ${user.department?.name}`}
             >
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
               <div className="flex flex-col leading-tight">
-                <span className="text-sm font-semibold text-gray-900">{user.name}</span>
-                <span className="text-xs text-gray-500">{user.department?.name}</span>
+                <span className="text-sm font-semibold text-white">{user.name}</span>
+                <span className="text-xs text-slate-400">{user.department?.name}</span>
               </div>
             </div>
 
             {/* Logout Button */}
             <button
               onClick={logout}
-              className="hidden sm:flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 border border-gray-200 hover:border-red-200"
+              className="hidden sm:flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-red-400 hover:bg-red-900/30 rounded-lg transition-all duration-200 border border-slate-600 hover:border-red-500"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
