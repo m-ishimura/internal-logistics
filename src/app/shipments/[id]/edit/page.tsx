@@ -286,31 +286,26 @@ export default function EditShipmentPage() {
     )
   }
 
-  void items.find(item => item.id === formData.itemId) // Used for validation/debugging purposes
-
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="flex-1 flex items-start justify-center px-4 py-8">
-        <div className="w-full max-w-2xl space-y-6">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900">発送を編集</h1>
-            <p className="mt-2 text-gray-600">
-              発送情報を編集します
-            </p>
-          </div>
+    <div className="w-full px-4 sm:px-6 lg:px-8 space-y-6">
+      <div>
+        <h1 className="page-title">発送を編集</h1>
+        <p className="page-subtitle">発送情報を編集します</p>
+      </div>
 
-          {error && (
-            <Alert variant="error">
-              {error}
-            </Alert>
-          )}
+      {error && (
+        <Alert variant="error">
+          {error}
+        </Alert>
+      )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle>発送情報</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="max-w-2xl">
+        <Card>
+          <CardHeader>
+            <CardTitle>発送情報</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
                 <Select
                   id="itemId"
                   label="備品"
@@ -485,23 +480,22 @@ export default function EditShipmentPage() {
                   help="登録日を入力してください"
                 />
 
-                <div className="flex gap-4 pt-6">
-                  <Button type="submit" loading={loading} disabled={loading}>
-                    更新する
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="secondary" 
-                    onClick={() => router.back()}
-                    disabled={loading}
-                  >
-                    キャンセル
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
+              <div className="border-t border-gray-200 pt-6 mt-6 flex gap-3">
+                <Button type="submit" loading={loading} disabled={loading}>
+                  更新する
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => router.back()}
+                  disabled={loading}
+                >
+                  キャンセル
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

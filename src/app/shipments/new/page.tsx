@@ -70,15 +70,12 @@ export default function NewShipmentPage() {
         url += `&departmentId=${departmentId}`
       }
       
-      console.log('[DEBUG] Fetching items from:', url)
-      
       const response = await fetch(url, {
         credentials: 'include'
       })
-      
+
       if (response.ok) {
         const data = await response.json()
-        console.log('[DEBUG] Items fetched:', data.data)
         setItems(data.data || [])
       } else {
         const errorData = await response.text()
@@ -222,15 +219,11 @@ export default function NewShipmentPage() {
   const selectedItem = items.find(item => item.id === formData.itemId)
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="flex-1 flex items-start justify-center px-4 py-8">
-        <div className="w-full max-w-2xl space-y-6">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900">新しい発送を登録</h1>
-            <p className="mt-2 text-gray-600">
-              新しい発送をシステムに登録します
-            </p>
-          </div>
+    <div className="w-full px-4 sm:px-6 lg:px-8 space-y-6">
+      <div>
+        <h1 className="page-title">新しい発送を登録</h1>
+        <p className="page-subtitle">新しい発送をシステムに登録します</p>
+      </div>
 
       {error && (
         <Alert variant="error">
@@ -238,12 +231,13 @@ export default function NewShipmentPage() {
         </Alert>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>発送情報</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="max-w-2xl">
+        <Card>
+          <CardHeader>
+            <CardTitle>発送情報</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
             <Select
               id="itemId"
               label="備品"
@@ -430,23 +424,22 @@ export default function NewShipmentPage() {
               help="既に発送済みの場合は登録日を入力してください"
             />
 
-            <div className="flex gap-4 pt-6">
-              <Button type="submit" loading={loading} disabled={loading}>
-                登録する
-              </Button>
-              <Button 
-                type="button" 
-                variant="secondary" 
-                onClick={() => router.back()}
-                disabled={loading}
-              >
-                キャンセル
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-        </div>
+              <div className="border-t border-gray-200 pt-6 mt-6 flex gap-3">
+                <Button type="submit" loading={loading} disabled={loading}>
+                  登録する
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => router.back()}
+                  disabled={loading}
+                >
+                  キャンセル
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

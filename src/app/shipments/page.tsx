@@ -3,15 +3,21 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
-import { 
-  Button, 
-  Input, 
+import {
+  Button,
+  Input,
   Select,
-  Card, 
-  CardHeader, 
-  CardTitle, 
+  Card,
+  CardHeader,
+  CardTitle,
   CardContent,
-  Alert
+  Alert,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell
 } from '@/components/ui'
 import type { Shipment, PaginatedResponse, Item, Department } from '@/types'
 import { isShipmentLocked, getShipmentLockMessage } from '@/lib/shipment-utils'
@@ -248,18 +254,18 @@ export default function ShipmentsPage() {
   if (!user) return null
 
   return (
-    <div className="w-full max-w-none px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-8" style={{ paddingLeft: '1rem', paddingRight: '1rem', paddingTop: '1rem', paddingBottom: '1rem' }}>
-      <div className="flex justify-between items-center">
+    <div className="w-full px-4 sm:px-6 lg:px-8 space-y-6">
+      <div className="page-header">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">発送管理</h1>
-          <p className="mt-2 text-gray-600">
-            {user.role === 'DEPARTMENT_USER' 
+          <h1 className="page-title">発送管理</h1>
+          <p className="page-subtitle">
+            {user.role === 'DEPARTMENT_USER'
               ? `${user.department?.name}の発送を管理`
               : '全部署の発送を管理'
             }
           </p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-3">
           <Link href="/shipments/bulk">
             <Button variant="secondary">一括登録</Button>
           </Link>
@@ -294,7 +300,7 @@ export default function ShipmentsPage() {
                 </svg>
                 検索・フィルター
                 {hasActiveFilters && (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  <span className="badge badge-blue">
                     適用中
                   </span>
                 )}
@@ -312,7 +318,7 @@ export default function ShipmentsPage() {
             </div>
 
             {showFilters && (
-              <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl border border-gray-200 shadow-sm mb-6">
+              <div className="bg-white border border-gray-200 rounded-xl mb-6">
                 <form onSubmit={handleSearch} className="p-6 pb-3">
                   <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${user?.role === 'MANAGEMENT_USER' ? 'xl:grid-cols-6' : 'xl:grid-cols-5'} gap-4 mb-6`}>
                     {/* 備品選択 */}
@@ -472,128 +478,116 @@ export default function ShipmentsPage() {
               {hasActiveFilters ? '検索条件に一致する発送が見つかりません' : '登録された発送がありません'}
             </div>
           ) : (
-            <div>
-              <div className="overflow-x-auto shadow-sm rounded-lg border border-gray-200 bg-white" style={{ padding: '2rem', minWidth: '800px' }}>
-                  {/* ヘッダー */}
-                  <div className={`grid grid-cols-1 sm:grid-cols-4 ${user.role === 'MANAGEMENT_USER' ? 'lg:grid-cols-9' : 'lg:grid-cols-8'} gap-2 px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-300 rounded-lg w-full`} style={{ 
-                    minWidth: '800px',
-                    gridTemplateColumns: user.role === 'MANAGEMENT_USER' 
-                      ? '100px 2fr 80px 2fr 0.7fr 0.7fr 1fr 200px 80px'
-                      : '100px 2fr 80px 2fr 0.7fr 0.7fr 200px 80px'
-                  }}>
-                  <div className="text-sm font-semibold text-gray-800">登録日</div>
-                  <div className="text-sm font-semibold text-gray-800">備品名</div>
-                  <div className="text-sm font-semibold text-gray-800">数量</div>
-                  <div className="text-sm font-semibold text-gray-800">発送先</div>
-                  <div className="text-sm font-semibold text-gray-800">担当者</div>
-                  <div className="text-sm font-semibold text-gray-800">発送者</div>
-                  {user.role === 'MANAGEMENT_USER' && <div className="text-sm font-semibold text-gray-800">発送元部署</div>}
-                  <div className="text-sm font-semibold text-gray-800">メモ</div>
-                  <div className="text-sm font-semibold text-gray-800">操作</div>
-                </div>
-                
-                {/* データ行 */}
-                {shipments.map((shipment) => (
-                  <div key={shipment.id} className="flex items-center justify-between px-6 py-2 mt-1 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors w-full" style={{ minWidth: '800px' }}>
-                    <div className={`flex-1 grid grid-cols-1 sm:grid-cols-4 ${user.role === 'MANAGEMENT_USER' ? 'lg:grid-cols-9' : 'lg:grid-cols-8'} gap-2 items-center`} style={{
-                      gridTemplateColumns: user.role === 'MANAGEMENT_USER' 
-                        ? '100px 2fr 80px 2fr 0.7fr 0.7fr 1fr 200px 80px'
-                        : '100px 2fr 80px 2fr 0.7fr 0.7fr 200px 80px'
-                    }}>
-                      <div className="text-sm text-gray-700">
-                        {shipment.shippedAt 
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>登録日</TableHead>
+                    <TableHead>備品名</TableHead>
+                    <TableHead>数量</TableHead>
+                    <TableHead>発送先</TableHead>
+                    <TableHead>担当者</TableHead>
+                    <TableHead>発送者</TableHead>
+                    {user.role === 'MANAGEMENT_USER' && <TableHead>発送元部署</TableHead>}
+                    <TableHead>メモ</TableHead>
+                    <TableHead className="text-center">操作</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {shipments.map((shipment) => (
+                    <TableRow key={shipment.id}>
+                      <TableCell className="text-gray-500 whitespace-nowrap">
+                        {shipment.shippedAt
                           ? new Date(shipment.shippedAt).toLocaleDateString('ja-JP')
                           : <span className="text-gray-400">未発送</span>
                         }
-                      </div>
-                      <div className="font-medium text-gray-900 truncate">
+                      </TableCell>
+                      <TableCell className="font-medium text-gray-900">
                         {shipment.item?.name || '-'}
-                      </div>
-                      <div className="text-sm text-gray-700">
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
                         {shipment.quantity} {shipment.item?.unit || ''}
-                      </div>
-                      <div className="text-sm text-gray-700">
+                      </TableCell>
+                      <TableCell>
                         {shipment.destinationDepartment?.name || '-'}
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        {shipment.shipmentUser?.name || '-'}
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        {shipment.sender?.name}
-                      </div>
+                      </TableCell>
+                      <TableCell className="text-gray-600">{shipment.shipmentUser?.name || '-'}</TableCell>
+                      <TableCell className="text-gray-600">{shipment.sender?.name}</TableCell>
                       {user.role === 'MANAGEMENT_USER' && (
-                        <div className="text-sm text-gray-600">
-                          {shipment.shipmentDepartment?.name}
-                        </div>
+                        <TableCell className="text-gray-600">{shipment.shipmentDepartment?.name}</TableCell>
                       )}
-                      <div className="text-sm text-gray-600 truncate" title={shipment.notes || ''}>
-                        {shipment.notes 
-                          ? shipment.notes.length > 20 
-                            ? `${shipment.notes.substring(0, 20)}...` 
-                            : shipment.notes
-                          : '-'
-                        }
-                      </div>
-                      <div className="relative dropdown-container">
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            const shipmentIdString = String(shipment.id)
-                            handleDropdownToggle(e, shipmentIdString)
-                          }}
-                          className="flex items-center justify-center w-8 h-8 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors duration-200 min-h-12 px-4 py-4"
-                        >
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                          </svg>
-                        </button>
-                        {openDropdown === String(shipment.id) && (
-                          (() => {
-                            const shipmentIdString = String(shipment.id)
-                            const position = dropdownPositions[shipmentIdString] || 'bottom'
-                            const isLocked = isShipmentLocked(shipment.shippedAt ?? null)
-                            return (
-                              <div className={`absolute ${position === 'top' ? 'bottom-8' : 'top-8'} right-0 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50 w-24`}>
-                                {isLocked ? (
-                                  <div className="w-full px-4 py-2 text-xs text-gray-400 cursor-not-allowed">
-                                    編集不可
-                                  </div>
-                                ) : (
-                                  <>
-                                    <Link
-                                      href={`/shipments/${shipment.id}/edit`}
-                                      className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                                    >
-                                      編集
-                                    </Link>
-                                    <button
-                                      onClick={() => handleDelete(String(shipment.id), shipment.item?.name || '不明', shipment)}
-                                      disabled={deleteLoading === String(shipment.id)}
-                                      className="w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 text-left flex items-center disabled:opacity-50"
-                                    >
-                                      {deleteLoading === String(shipment.id) ? '削除中...' : '削除'}
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            )
-                          })()
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                      <TableCell className="text-gray-600">
+                        <span title={shipment.notes || ''}>
+                          {shipment.notes
+                            ? shipment.notes.length > 20
+                              ? `${shipment.notes.substring(0, 20)}...`
+                              : shipment.notes
+                            : '-'
+                          }
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="relative dropdown-container inline-block">
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              handleDropdownToggle(e, String(shipment.id))
+                            }}
+                            className="flex items-center justify-center w-8 h-8 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors"
+                          >
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                            </svg>
+                          </button>
+                          {openDropdown === String(shipment.id) && (
+                            (() => {
+                              const position = dropdownPositions[String(shipment.id)] || 'bottom'
+                              const isLocked = isShipmentLocked(shipment.shippedAt ?? null)
+                              return (
+                                <div className={`absolute ${position === 'top' ? 'bottom-8' : 'top-8'} right-0 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50 w-24`}>
+                                  {isLocked ? (
+                                    <div className="w-full px-4 py-2 text-xs text-gray-400 cursor-not-allowed">
+                                      編集不可
+                                    </div>
+                                  ) : (
+                                    <>
+                                      <Link
+                                        href={`/shipments/${shipment.id}/edit`}
+                                        className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                                      >
+                                        編集
+                                      </Link>
+                                      <button
+                                        onClick={() => handleDelete(String(shipment.id), shipment.item?.name || '不明', shipment)}
+                                        disabled={deleteLoading === String(shipment.id)}
+                                        className="w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 text-left flex items-center disabled:opacity-50"
+                                      >
+                                        {deleteLoading === String(shipment.id) ? '削除中...' : '削除'}
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              )
+                            })()
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
 
-              {/* ページネーション */}
               {pagination.totalPages > 1 && (
-                <div className="flex justify-between items-center mt-6">
-                  <div className="text-sm text-gray-600">
-                    {pagination.total}件中 {(pagination.page - 1) * pagination.limit + 1}〜
-                    {Math.min(pagination.page * pagination.limit, pagination.total)}件を表示
-                  </div>
-                  <div className="flex gap-2">
+                <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
+                  <p className="text-sm text-gray-500">
+                    {pagination.total}件中{' '}
+                    <span className="font-medium text-gray-700">
+                      {(pagination.page - 1) * pagination.limit + 1}〜{Math.min(pagination.page * pagination.limit, pagination.total)}
+                    </span>
+                    {' '}件を表示
+                  </p>
+                  <div className="flex items-center gap-2">
                     <Button
                       variant="secondary"
                       size="sm"
@@ -602,7 +596,7 @@ export default function ShipmentsPage() {
                     >
                       前へ
                     </Button>
-                    <span className="px-3 py-2 text-sm">
+                    <span className="text-sm text-gray-600 font-medium px-2">
                       {pagination.page} / {pagination.totalPages}
                     </span>
                     <Button
@@ -616,7 +610,7 @@ export default function ShipmentsPage() {
                   </div>
                 </div>
               )}
-            </div>
+            </>
           )}
         </CardContent>
       </Card>

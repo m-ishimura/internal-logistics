@@ -92,18 +92,18 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-white to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
             アイキューブ
           </h1>
-          <h2 className="text-xl font-medium text-gray-700">
+          <p className="text-sm text-gray-500 mt-1">
             本部便発送システム
-          </h2>
+          </p>
         </div>
 
-        <Card>
+        <Card className="shadow-xl border-gray-200">
           <CardHeader>
             <CardTitle as="h2">ログイン</CardTitle>
           </CardHeader>
@@ -177,13 +177,9 @@ export default function LoginPage() {
           </CardContent>
         </Card>
 
-        <div className="text-center text-sm text-gray-600">
-          <p>
-            本システムは、アイキューブ社内専用システムです。
-            <br />
-            アクセスには適切な認証が必要です。
-          </p>
-        </div>
+        <p className="text-center text-xs text-gray-400">
+          本システムはアイキューブ社内専用です
+        </p>
       </div>
     </div>
   )

@@ -26,9 +26,9 @@ export interface TableCellProps extends TdHTMLAttributes<HTMLTableCellElement> {
 
 export const Table = ({ children, className = '', ...props }: TableProps) => {
   const classes = ['table', className].filter(Boolean).join(' ')
-  
+
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto border border-gray-200 rounded-xl shadow-sm">
       <table className={classes} {...props}>
         {children}
       </table>
