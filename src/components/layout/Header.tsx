@@ -30,7 +30,7 @@ export default function Header() {
       className="bg-slate-800 shadow-md sticky top-0 z-50"
       role="banner"
     >
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+      <div className="px-8 sm:px-12 lg:px-16">
         <div className="flex justify-between items-center h-20">
           {/* Logo Section */}
           <div className="flex-shrink-0 flex items-center">
